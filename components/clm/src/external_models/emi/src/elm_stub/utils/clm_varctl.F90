@@ -336,6 +336,9 @@ module clm_varctl
   character(len=32), public :: alquimia_engine_name = 'pflotran'
   character(len=32), public :: alquimia_IC_name     = 'initial' ! Initial condition
   character(len=32), public :: alquimia_CO2_name     = 'CO2(aq)' ! Initial condition
+  character(len=32), public :: alquimia_NH4_name     = 'NH4+' ! Initial condition
+  character(len=32), public :: alquimia_NO3_name     = 'NO3-' ! Initial condition
+  logical, public           :: alquimia_handsoff      = .true.
   !----------------------------------------------------------
   ! To retrieve namelist
   !----------------------------------------------------------

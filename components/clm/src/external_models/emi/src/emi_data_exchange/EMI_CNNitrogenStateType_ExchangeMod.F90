@@ -59,7 +59,9 @@ contains
     integer                             :: count
 
     associate(& 
-         decomp_npools_vr => nitrogenstate_vars%decomp_npools_vr_col   &
+         decomp_npools_vr => nitrogenstate_vars%decomp_npools_vr_col , &
+         smin_nh4_vr      => nitrogenstate_vars%smin_nh4_vr_col      , &
+         smin_no3_vr      => nitrogenstate_vars%smin_no3_vr_col        &
          )
 
     count = 0
@@ -87,6 +89,24 @@ contains
                    do k = 1, ndecomp_pools
                       cur_data%data_real_3d(c,j,k) = decomp_npools_vr(c,j,k)
                    enddo
+                enddo
+             enddo
+             cur_data%is_set = .true.
+
+          case (L2E_STATE_NH4_VERTICALLY_RESOLVED)
+             do fc = 1, num_filter
+                c = filter(fc)
+                do j = 1, nlevdecomp_full
+                   cur_data%data_real_2d(c,j) = smin_nh4_vr(c,j)
+                enddo
+             enddo
+             cur_data%is_set = .true.
+
+          case (L2E_STATE_NO3_VERTICALLY_RESOLVED)
+             do fc = 1, num_filter
+                c = filter(fc)
+                do j = 1, nlevdecomp_full
+                   cur_data%data_real_2d(c,j) = smin_no3_vr(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -130,7 +150,9 @@ contains
     integer                             :: count
 
     associate(& 
-         decomp_npools_vr => nitrogenstate_vars%decomp_npools_vr_col   &
+         decomp_npools_vr => nitrogenstate_vars%decomp_npools_vr_col , &
+         smin_nh4_vr      => nitrogenstate_vars%smin_nh4_vr_col      , &
+         smin_no3_vr      => nitrogenstate_vars%smin_no3_vr_col        &
          )
 
     count = 0
@@ -158,6 +180,24 @@ contains
                    do k = 1, ndecomp_pools
                       decomp_npools_vr(c,j,k) = cur_data%data_real_3d(c,j,k)
                    enddo
+                enddo
+             enddo
+             cur_data%is_set = .true.
+
+          case (E2L_STATE_NH4_VERTICALLY_RESOLVED)
+             do fc = 1, num_filter
+                c = filter(fc)
+                do j = 1, nlevdecomp_full
+                   smin_nh4_vr(c,j) = cur_data%data_real_2d(c,j)
+                enddo
+             enddo
+             cur_data%is_set = .true.
+
+          case (E2L_STATE_NO3_VERTICALLY_RESOLVED)
+             do fc = 1, num_filter
+                c = filter(fc)
+                do j = 1, nlevdecomp_full
+                   smin_no3_vr(c,j) = cur_data%data_real_2d(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.

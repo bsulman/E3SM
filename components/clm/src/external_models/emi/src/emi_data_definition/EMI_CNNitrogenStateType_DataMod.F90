@@ -58,7 +58,7 @@ contains
        id_val         =  L2E_STATE_NITROGEN_POOLS_VERTICALLY_RESOLVED
        name_val       =  'decomp npools vr'
        long_name_val  =  'decomp npools vr: ELM to EM'
-       units_val      =  '[kg/m2]'
+       units_val      =  '[gN/m3]'
        is_real_type   =  .true.
        ndim           =  3
        dim1_beg_name  =  dimname_begc
@@ -69,11 +69,37 @@ contains
        dim3_end_name  =  dimname_ndecomp_pools
        data_found   =  .true.
 
+    case(L2E_STATE_NH4_VERTICALLY_RESOLVED)
+       id_val         =  L2E_STATE_NH4_VERTICALLY_RESOLVED
+       name_val       =  'NH4 vr'
+       long_name_val  =  'NH4 vr: ELM to EM'
+       units_val      =  '[gN/m3]'
+       is_real_type   =  .true.
+       ndim           =  2
+       dim1_beg_name  =  dimname_begc
+       dim1_end_name  =  dimname_endc
+       dim2_beg_name  =  dimname_one
+       dim2_end_name  =  dimname_nlevdecomp_full
+       data_found   =  .true.
+
+    case(L2E_STATE_NO3_VERTICALLY_RESOLVED)
+       id_val         =  L2E_STATE_NO3_VERTICALLY_RESOLVED
+       name_val       =  'NO3 vr'
+       long_name_val  =  'NO3 vr: ELM to EM'
+       units_val      =  '[gN/m3]'
+       is_real_type   =  .true.
+       ndim           =  2
+       dim1_beg_name  =  dimname_begc
+       dim1_end_name  =  dimname_endc
+       dim2_beg_name  =  dimname_one
+       dim2_end_name  =  dimname_nlevdecomp_full
+       data_found   =  .true.
+
     case(E2L_STATE_NITROGEN_POOLS_VERTICALLY_RESOLVED)
        id_val         =  E2L_STATE_NITROGEN_POOLS_VERTICALLY_RESOLVED
        name_val       =  'decomp npools vr'
        long_name_val  =  'decomp npools vr: EM to ELM'
-       units_val      =  '[kg/m2]'
+       units_val      =  '[gN/m3]'
        is_real_type   =  .true.
        ndim           =  3
        dim1_beg_name  =  dimname_begc
@@ -82,6 +108,32 @@ contains
        dim2_end_name  =  dimname_nlevdecomp_full
        dim3_beg_name  =  dimname_one
        dim3_end_name  =  dimname_ndecomp_pools
+       data_found   =  .true.
+
+    case(E2L_STATE_NH4_VERTICALLY_RESOLVED)
+       id_val         =  E2L_STATE_NH4_VERTICALLY_RESOLVED
+       name_val       =  'NH4 vr'
+       long_name_val  =  'NH4 vr: EM to ELM'
+       units_val      =  '[gN/m3]'
+       is_real_type   =  .true.
+       ndim           =  2
+       dim1_beg_name  =  dimname_begc
+       dim1_end_name  =  dimname_endc
+       dim2_beg_name  =  dimname_one
+       dim2_end_name  =  dimname_nlevdecomp_full
+       data_found   =  .true.
+
+    case(E2L_STATE_NO3_VERTICALLY_RESOLVED)
+       id_val         =  E2L_STATE_NO3_VERTICALLY_RESOLVED
+       name_val       =  'decomp npools vr'
+       long_name_val  =  'decomp npools vr: EM to ELM'
+       units_val      =  '[gN/m3]'
+       is_real_type   =  .true.
+       ndim           =  2
+       dim1_beg_name  =  dimname_begc
+       dim1_end_name  =  dimname_endc
+       dim2_beg_name  =  dimname_one
+       dim2_end_name  =  dimname_nlevdecomp_full
        data_found   =  .true.
     end select
     

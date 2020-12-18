@@ -4,14 +4,15 @@ module EMI_WaterFluxType_ExchangeMod
   use shr_log_mod                           , only : errMsg => shr_log_errMsg
   use abortutils                            , only : endrun
   use clm_varctl                            , only : iulog
-  use EMI_DataMod         , only : emi_data_list, emi_data
-  use EMI_DataDimensionMod , only : emi_data_dimension_list_type
-  use WaterFluxType                         , only : waterflux_type
-  use ColumnDataType                        , only : col_wf
-  use VegetationDataType                    , only : veg_wf
+  use EMI_DataMod                           , only : emi_data_list, emi_data
+  use EMI_DataDimensionMod                  , only : emi_data_dimension_list_type
+  use WaterFluxType        , only : waterflux_type
   use EMI_Atm2LndType_Constants
   use EMI_CanopyStateType_Constants
   use EMI_ChemStateType_Constants
+  use EMI_CNCarbonStateType_Constants
+  use EMI_CNNitrogenStateType_Constants
+  use EMI_CNCarbonFluxType_Constants
   use EMI_EnergyFluxType_Constants
   use EMI_SoilHydrologyType_Constants
   use EMI_SoilStateType_Constants
@@ -38,7 +39,8 @@ contains
     ! Pack data from ALM waterflux_vars for EM
     !
     ! !USES:
-    use clm_varpar             , only : nlevsoi, nlevgrnd, nlevsno
+    use clm_varpar             , only : nlevgrnd
+    use clm_varpar             , only : nlevsoi
     !
     implicit none
     !
@@ -50,35 +52,35 @@ contains
     type(waterflux_type)   , intent(in) :: waterflux_vars
     !
     ! !LOCAL_VARIABLES:
-    integer                             :: fc,c,j
+    integer                             :: fc,c,j,k
     class(emi_data), pointer            :: cur_data
     logical                             :: need_to_pack
     integer                             :: istage
     integer                             :: count
 
     associate(& 
-         mflx_infl            => col_wf%mflx_infl            , &
-         mflx_et              => col_wf%mflx_et              , &
-         mflx_dew             => col_wf%mflx_dew             , &
-         mflx_sub_snow        => col_wf%mflx_sub_snow        , &
-         mflx_snowlyr_disp    => col_wf%mflx_snowlyr_disp    , &
-         mflx_snowlyr         => col_wf%mflx_snowlyr         , &
-         mflx_drain           => col_wf%mflx_drain           , &
-         qflx_infl            => col_wf%qflx_infl            , &
-         qflx_totdrain        => col_wf%qflx_totdrain        , &
-         qflx_gross_evap_soil => col_wf%qflx_gross_evap_soil , &
-         qflx_gross_infl_soil => col_wf%qflx_gross_infl_soil , &
-         qflx_surf            => col_wf%qflx_surf            , &
-         qflx_dew_grnd        => col_wf%qflx_dew_grnd        , &
-         qflx_dew_snow        => col_wf%qflx_dew_snow        , &
-         qflx_h2osfc2topsoi   => col_wf%qflx_h2osfc2topsoi   , &
-         qflx_sub_snow        => col_wf%qflx_sub_snow        , &
-         qflx_snow2topsoi     => col_wf%qflx_snow2topsoi     , &
-         qflx_rootsoi         => col_wf%qflx_rootsoi         , &
-         qflx_adv             => col_wf%qflx_adv             , &
-         qflx_drain_vr        => col_wf%qflx_drain_vr        , &
-         qflx_tran_veg        => col_wf%qflx_tran_veg        , &
-         qflx_rootsoi_frac    => veg_wf%qflx_rootsoi_frac    &
+         mflx_infl            => waterflux_vars%mflx_infl_col            , &
+         mflx_et              => waterflux_vars%mflx_et_col              , &
+         mflx_dew             => waterflux_vars%mflx_dew_col             , &
+         mflx_sub_snow        => waterflux_vars%mflx_sub_snow_col        , &
+         mflx_snowlyr_disp    => waterflux_vars%mflx_snowlyr_disp_col    , &
+         mflx_snowlyr         => waterflux_vars%mflx_snowlyr_col         , &
+         mflx_drain           => waterflux_vars%mflx_drain_col           , &
+         qflx_infl            => waterflux_vars%qflx_infl_col            , &
+         qflx_totdrain        => waterflux_vars%qflx_totdrain_col        , &
+         qflx_gross_evap_soil => waterflux_vars%qflx_gross_evap_soil_col , &
+         qflx_gross_infl_soil => waterflux_vars%qflx_gross_infl_soil_col , &
+         qflx_surf            => waterflux_vars%qflx_surf_col            , &
+         qflx_dew_grnd        => waterflux_vars%qflx_dew_grnd_col        , &
+         qflx_dew_snow        => waterflux_vars%qflx_dew_snow_col        , &
+         qflx_h2osfc2topsoi   => waterflux_vars%qflx_h2osfc2topsoi_col   , &
+         qflx_sub_snow        => waterflux_vars%qflx_sub_snow_col        , &
+         qflx_snow2topsoi     => waterflux_vars%qflx_snow2topsoi_col     , &
+         qflx_rootsoi         => waterflux_vars%qflx_rootsoi_col         , &
+         qflx_adv             => waterflux_vars%qflx_adv_col             , &
+         qflx_drain_vr        => waterflux_vars%qflx_drain_vr_col        , &
+         qflx_tran_veg        => waterflux_vars%qflx_tran_veg_col        , &
+         qflx_rootsoi_frac  => waterflux_vars%qflx_rootsoi_frac_patch    &
          )
 
     count = 0
@@ -291,7 +293,6 @@ contains
     ! Unpack data for ALM waterflux_vars from EM
     !
     ! !USES:
-    use clm_varpar             , only : nlevsoi, nlevgrnd, nlevsno
     !
     implicit none
     !
@@ -303,14 +304,14 @@ contains
     type(waterflux_type)   , intent(in) :: waterflux_vars
     !
     ! !LOCAL_VARIABLES:
-    integer                             :: fc,c,j
+    integer                             :: fc,c,j,k
     class(emi_data), pointer            :: cur_data
     logical                             :: need_to_pack
     integer                             :: istage
     integer                             :: count
 
     associate(& 
-         mflx_snowlyr => col_wf%mflx_snowlyr   &
+         mflx_snowlyr => waterflux_vars%mflx_snowlyr_col   &
          )
 
     count = 0

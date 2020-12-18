@@ -6,11 +6,13 @@ module EMI_WaterStateType_ExchangeMod
   use clm_varctl                            , only : iulog
   use EMI_DataMod                           , only : emi_data_list, emi_data
   use EMI_DataDimensionMod                  , only : emi_data_dimension_list_type
-  use WaterStateType                        , only : waterstate_type
-  use ColumnDataType                        , only : col_ws
+  use WaterStateType       , only : waterstate_type
   use EMI_Atm2LndType_Constants
   use EMI_CanopyStateType_Constants
   use EMI_ChemStateType_Constants
+  use EMI_CNCarbonStateType_Constants
+  use EMI_CNNitrogenStateType_Constants
+  use EMI_CNCarbonFluxType_Constants
   use EMI_EnergyFluxType_Constants
   use EMI_SoilHydrologyType_Constants
   use EMI_SoilStateType_Constants
@@ -37,7 +39,9 @@ contains
     ! Pack data from ALM waterstate_vars for EM
     !
     ! !USES:
-    use clm_varpar             , only : nlevsoi, nlevgrnd, nlevsno
+    use clm_varpar             , only : nlevgrnd
+    use clm_varpar             , only : nlevsoi
+    use clm_varpar             , only : nlevsno
     !
     implicit none
     !
@@ -49,28 +53,28 @@ contains
     type(waterstate_type)  , intent(in) :: waterstate_vars
     !
     ! !LOCAL_VARIABLES:
-    integer                             :: fc,c,j
+    integer                             :: fc,c,j,k
     class(emi_data), pointer            :: cur_data
     logical                             :: need_to_pack
     integer                             :: istage
     integer                             :: count
 
     associate(& 
-         h2osoi_liq    => col_ws%h2osoi_liq    , &
-         h2osoi_ice    => col_ws%h2osoi_ice    , &
-         soilp         => col_ws%soilp         , &
-         frac_h2osfc   => col_ws%frac_h2osfc   , &
-         finundated    => col_ws%finundated    , &
-         h2osoi_liqvol => col_ws%h2osoi_liqvol , &
-         h2osoi_icevol => col_ws%h2osoi_icevol , &
-         h2osoi_vol    => col_ws%h2osoi_vol    , &
-         air_vol       => col_ws%air_vol       , &
+         h2osoi_liq    => waterstate_vars%h2osoi_liq_col    , &
+         h2osoi_ice    => waterstate_vars%h2osoi_ice_col    , &
+         soilp         => waterstate_vars%soilp_col         , &
+         frac_h2osfc   => waterstate_vars%frac_h2osfc_col   , &
+         finundated    => waterstate_vars%finundated_col    , &
+         h2osoi_liqvol => waterstate_vars%h2osoi_liqvol_col , &
+         h2osoi_icevol => waterstate_vars%h2osoi_icevol_col , &
+         h2osoi_vol    => waterstate_vars%h2osoi_vol_col    , &
+         air_vol       => waterstate_vars%air_vol_col       , &
          rho_vap       => waterstate_vars%rho_vap_col       , &
          rhvap_soi     => waterstate_vars%rhvap_soi_col     , &
-         smp_l         => col_ws%smp_l         , &
-         h2osno        => col_ws%h2osno        , &
-         h2osfc        => col_ws%h2osfc        , &
-         frac_sno_eff  => col_ws%frac_sno_eff    &
+         smp_l         => waterstate_vars%smp_l_col         , &
+         h2osno        => waterstate_vars%h2osno_col        , &
+         h2osfc        => waterstate_vars%h2osfc_col        , &
+         frac_sno_eff  => waterstate_vars%frac_sno_eff_col    &
          )
 
     count = 0
@@ -271,7 +275,7 @@ contains
     ! Unpack data for ALM waterstate_vars from EM
     !
     ! !USES:
-    use clm_varpar             , only : nlevsoi, nlevgrnd, nlevsno
+    use clm_varpar             , only : nlevgrnd
     !
     implicit none
     !
@@ -283,16 +287,16 @@ contains
     type(waterstate_type)  , intent(in) :: waterstate_vars
     !
     ! !LOCAL_VARIABLES:
-    integer                             :: fc,c,j
+    integer                             :: fc,c,j,k
     class(emi_data), pointer            :: cur_data
     logical                             :: need_to_pack
     integer                             :: istage
     integer                             :: count
 
     associate(& 
-         h2osoi_liq => col_ws%h2osoi_liq , &
-         h2osoi_ice => col_ws%h2osoi_ice , &
-         soilp      => col_ws%soilp        &
+         h2osoi_liq => waterstate_vars%h2osoi_liq_col , &
+         h2osoi_ice => waterstate_vars%h2osoi_ice_col , &
+         soilp      => waterstate_vars%soilp_col        &
          )
 
     count = 0

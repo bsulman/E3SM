@@ -4,12 +4,15 @@ module EMI_SoilHydrologyType_ExchangeMod
   use shr_log_mod                           , only : errMsg => shr_log_errMsg
   use abortutils                            , only : endrun
   use clm_varctl                            , only : iulog
-  use EMI_DataMod         , only : emi_data_list, emi_data
-  use EMI_DataDimensionMod , only : emi_data_dimension_list_type
-  use SoilHydrologyType                     , only : soilhydrology_type
+  use EMI_DataMod                           , only : emi_data_list, emi_data
+  use EMI_DataDimensionMod                  , only : emi_data_dimension_list_type
+  use SoilHydrologyType    , only : soilhydrology_type
   use EMI_Atm2LndType_Constants
   use EMI_CanopyStateType_Constants
   use EMI_ChemStateType_Constants
+  use EMI_CNCarbonStateType_Constants
+  use EMI_CNNitrogenStateType_Constants
+  use EMI_CNCarbonFluxType_Constants
   use EMI_EnergyFluxType_Constants
   use EMI_SoilHydrologyType_Constants
   use EMI_SoilStateType_Constants
@@ -36,7 +39,7 @@ contains
     ! Pack data from ALM soilhydrology_vars for EM
     !
     ! !USES:
-    use clm_varpar             , only : nlevsoi, nlevgrnd, nlevsno
+    use clm_varpar             , only : nlevgrnd
     !
     implicit none
     !
@@ -48,7 +51,7 @@ contains
     type(soilhydrology_type) , intent(in) :: soilhydrology_vars
     !
     ! !LOCAL_VARIABLES:
-    integer                             :: fc,c,j
+    integer                             :: fc,c,j,k
     class(emi_data), pointer            :: cur_data
     logical                             :: need_to_pack
     integer                             :: istage
@@ -120,7 +123,6 @@ contains
     ! Unpack data for ALM soilhydrology_vars from EM
     !
     ! !USES:
-    use clm_varpar             , only : nlevsoi, nlevgrnd, nlevsno
     !
     implicit none
     !
@@ -132,7 +134,7 @@ contains
     type(soilhydrology_type) , intent(in) :: soilhydrology_vars
     !
     ! !LOCAL_VARIABLES:
-    integer                             :: fc,c,j
+    integer                             :: fc,c,j,k
     class(emi_data), pointer            :: cur_data
     logical                             :: need_to_pack
     integer                             :: istage

@@ -11,6 +11,8 @@ module EMI_CNCarbonStateType_ExchangeMod
   use EMI_CanopyStateType_Constants
   use EMI_ChemStateType_Constants
   use EMI_CNCarbonStateType_Constants
+  use EMI_CNNitrogenStateType_Constants
+  use EMI_CNCarbonFluxType_Constants
   use EMI_EnergyFluxType_Constants
   use EMI_SoilHydrologyType_Constants
   use EMI_SoilStateType_Constants

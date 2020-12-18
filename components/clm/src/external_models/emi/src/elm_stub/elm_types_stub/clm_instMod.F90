@@ -64,6 +64,8 @@ module clm_instMod
     call chemstate_vars%Init(bounds_proc)
     call soilstate_vars%init(bounds_proc)
     call soilhydrology_vars%Init(bounds_proc)
+    call temperature_vars%Init(bounds_proc)
+    call waterstate_vars%Init(bounds_proc)
 
   end subroutine clm_inst_biogeophys
 

@@ -83,7 +83,7 @@ program demo_alquimia
   write(*,*)'nlevdecomp_full: ',nlevdecomp_full
   write(*,*)'ndecomp_pools  : ',ndecomp_pools
   
-  ntimesteps = 20
+  ntimesteps = 24
 
   do timestep = 1, ntimesteps
     write(iulog,'(a,i3,a,i3)')'  TIMESTEP: ',timestep,' of ',ntimesteps
@@ -94,9 +94,9 @@ program demo_alquimia
      call get_clump_bounds(clump_rank, bounds_clump)
      
      write(iulog,*) 'Carbon pools: before: '
-      write(iulog,'(8e12.4)') carbonstate_vars%decomp_cpools_vr_col(1,1,:) ;
+      write(iulog,'(8e12.5)') carbonstate_vars%decomp_cpools_vr_col(1,1,1:8) ;
      write(iulog,*) 'Nitrogen pools: before: '
-     write(iulog,'(8e12.4)') nitrogenstate_vars%decomp_npools_vr_col(1,1,:) ;
+     write(iulog,'(8e12.5)') nitrogenstate_vars%decomp_npools_vr_col(1,1,1:8) ;
 
      write(iulog,*)'  Running Alquimia SOLVE'
      call EMI_Driver(                                                 &
@@ -116,11 +116,12 @@ program demo_alquimia
           temperature_vars  = temperature_vars)
 
           write(iulog,'(a)') 'Carbon pools: after: '
-         write(iulog,'(8e12.4)') carbonstate_vars%decomp_cpools_vr_col(1,1,:) ;
+         write(iulog,'(8e12.5)') carbonstate_vars%decomp_cpools_vr_col(1,1,1:8) ;
           
           write(iulog,'(a)') 'Nitrogen pools: after: '
-             write(iulog,'(8e12.4)') nitrogenstate_vars%decomp_npools_vr_col(1,1,:) ;
-             write(iulog,'(a,e12.4)') 'Heterotrophic respiration: ' ,carbonflux_vars%hr_vr_col(1,1)
+             write(iulog,'(8e12.5)') nitrogenstate_vars%decomp_npools_vr_col(1,1,1:8) ;
+             write(iulog,'(a,e12.4,a,e12.4,a,e12.4)') 'RH: ' ,carbonflux_vars%hr_vr_col(1,1),' NH4: ',&
+                    nitrogenstate_vars%smin_nh4_vr_col(1,1),' NO3: ',nitrogenstate_vars%smin_no3_vr_col(1,1)
 
   enddo
   !$OMP END PARALLEL DO
@@ -133,7 +134,7 @@ end program demo_alquimia
 !-----------------------------------------------------------------------
 subroutine set_namelist_variables()
 
-  use clm_varctl, only : use_em_alquimia, use_vertsoilc, alquimia_inputfile, alquimia_CO2_name
+  use clm_varctl, only : use_em_alquimia, use_vertsoilc, alquimia_inputfile, alquimia_CO2_name,alquimia_handsoff
 
   implicit none
 
@@ -141,6 +142,7 @@ subroutine set_namelist_variables()
   use_vertsoilc      = .true.
   alquimia_inputfile = 'alquimia_io/CTC_generated.in'
   alquimia_CO2_name  = 'HRimm'
+  alquimia_handsoff = .true.
 
 end subroutine set_namelist_variables
 !-----------------------------------------------------------------------
@@ -254,17 +256,17 @@ subroutine initialize_clm_data_structures(bounds_proc)
   decomp_cascade_con%decomp_pool_name_history(1)='LITR1'
   decomp_cascade_con%floating_cn_ratio_decomp_pools(1)=.true.
   decomp_cascade_con%initial_cn_ratio(1) = 20_r8
-  rateconstants(1) = 1.2
+  rateconstants(1) = 1.204
   decomp_cascade_con%cascade_receiver_pool(1)=5
   decomp_cascade_con%decomp_pool_name_history(2)='LITR2'
   decomp_cascade_con%floating_cn_ratio_decomp_pools(2)=.true.
   decomp_cascade_con%initial_cn_ratio(2) = 20_r8;
-  rateconstants(2) = 7.3e-02
+  rateconstants(2) = 7.26e-02
   decomp_cascade_con%cascade_receiver_pool(2)=6
   decomp_cascade_con%decomp_pool_name_history(3)='LITR3'
   decomp_cascade_con%floating_cn_ratio_decomp_pools(3)=.true.
   decomp_cascade_con%initial_cn_ratio(3) = 20_r8;
-  rateconstants(3) = 1.4e-02
+  rateconstants(3) = 1.41e-02
   decomp_cascade_con%cascade_receiver_pool(3)=7
   decomp_cascade_con%decomp_pool_name_history(4)='CWD'
   decomp_cascade_con%floating_cn_ratio_decomp_pools(4)=.true.
@@ -274,17 +276,17 @@ subroutine initialize_clm_data_structures(bounds_proc)
   decomp_cascade_con%decomp_pool_name_history(5)='SOIL1'
   decomp_cascade_con%floating_cn_ratio_decomp_pools(5)=.false.
   decomp_cascade_con%initial_cn_ratio(5)=12.0_r8;
-  rateconstants(5) = 7.3e-2
+  rateconstants(5) = 7.26e-2
   decomp_cascade_con%cascade_receiver_pool(5)=6
   decomp_cascade_con%decomp_pool_name_history(6)='SOIL2'
   decomp_cascade_con%floating_cn_ratio_decomp_pools(6)=.false.
   decomp_cascade_con%initial_cn_ratio(6)=12.0_r8;
-  rateconstants(1) = 1.4e-02
+  rateconstants(6) = 1.41e-02
   decomp_cascade_con%cascade_receiver_pool(6)=7
   decomp_cascade_con%decomp_pool_name_history(7)='SOIL3'
   decomp_cascade_con%floating_cn_ratio_decomp_pools(7)=.false.
   decomp_cascade_con%initial_cn_ratio(7)=10.0_r8;
-  rateconstants(7) = 1.4e-3
+  rateconstants(7) = 1.41e-3
   decomp_cascade_con%cascade_receiver_pool(7)=8
   decomp_cascade_con%decomp_pool_name_history(8)='SOIL4'
   decomp_cascade_con%floating_cn_ratio_decomp_pools(8)=.false.
@@ -299,19 +301,27 @@ subroutine initialize_clm_data_structures(bounds_proc)
 
      do j = 1, nlevgrnd
         soilstate_vars%cellclay_col(c,j)    = 0.2_r8
-        soilstate_vars%watsat_col(c,j)      = 0.4_r8
-        col_ws%h2osoi_liq(c,j) = (0.3_r8*(c**2._r8) + j)/100._r8
-        col_ws%h2osoi_ice(c,j) = 1._r8 - (0.3_r8*(c**2._r8) + j)/100._r8
+        soilstate_vars%watsat_col(c,j)      = 0.25_r8
+        waterstate_vars%h2osoi_liq_col(c,j) = (0.3_r8*(c**2._r8) + j)/100._r8
+        waterstate_vars%h2osoi_ice_col(c,j) = 1._r8 - (0.3_r8*(c**2._r8) + j)/100._r8
         col_es%t_soisno(c,j)      = 273.15_r8 + j*2_r8
+        temperature_vars%t_soisno_col(c,j) = col_es%t_soisno(c,j)
      enddo
      do j = 1, nlevdecomp_full
-       counter = 0.01_r8
+       counter = 1.0_r8
         do k = 1, ndecomp_pools
-           carbonstate_vars%decomp_cpools_vr_col(c,j,k) = counter;
-           nitrogenstate_vars%decomp_npools_vr_col(c,j,k) = counter/decomp_cascade_con%initial_cn_ratio(k);
+           carbonstate_vars%decomp_cpools_vr_col(c,j,k) = 1e-10;
+           nitrogenstate_vars%decomp_npools_vr_col(c,j,k) = 1e-10/decomp_cascade_con%initial_cn_ratio(k);
            ! counter = counter + 1.d0
-           carbonflux_vars%decomp_k_col(c,j,k) = counter*100*rateconstants(k)/(3600*24) ! Units of 1/s
+           carbonflux_vars%decomp_k_col(c,j,k) = rateconstants(k)/(3600*24) ! Units of 1/s
+           ! Duplicate calculation for rate_decomp in PFLOTRAN SOMDEC, assuming dt=3600
+           carbonflux_vars%decomp_k_col(c,j,k) = (1-exp(-carbonflux_vars%decomp_k_col(c,j,k)*3600))/3600
+           ! counter=counter+0.01_r8
         end do
+        carbonstate_vars%decomp_cpools_vr_col(c,j,1) = 1e3;
+        nitrogenstate_vars%decomp_npools_vr_col(c,j,1) = 1e3/decomp_cascade_con%initial_cn_ratio(1);
+        nitrogenstate_vars%smin_nh4_vr_col(c,j) = 1e-5
+        nitrogenstate_vars%smin_no3_vr_col(c,j) = 1e-5
      end do
      
   enddo
