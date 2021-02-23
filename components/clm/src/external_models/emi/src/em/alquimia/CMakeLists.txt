@@ -22,7 +22,8 @@ include_directories(${PETSC_INCLUDES})
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${PETSC_DIR}/${PETSC_ARCH}/lib")
 
 include_directories(${ALQUIMIA_DIR})
-link_libraries(${ALQUIMIA_DIR}/libalquimia.a ${PETSC_LIBRARIES} ${PETSC_DIR}/${PETSC_ARCH}/lib/libmpifort.dylib)
+link_libraries(${ALQUIMIA_DIR}/libalquimia.so ${PETSC_LIBRARIES}) 
+#link_libraries(${PETSC_DIR}/${PETSC_ARCH}/lib/libmpifort.dylib)) # This was necessary on Mac
 link_libraries($ENV{PFLOTRAN_DIR}/libpflotranchem.a)
 
 

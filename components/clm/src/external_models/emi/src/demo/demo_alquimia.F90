@@ -142,7 +142,7 @@ subroutine set_namelist_variables()
   use_vertsoilc      = .true.
   alquimia_inputfile = 'alquimia_io/CTC_generated.in'
   alquimia_CO2_name  = 'HRimm'
-  alquimia_handsoff = .true.
+  alquimia_handsoff = .false.
 
 end subroutine set_namelist_variables
 !-----------------------------------------------------------------------

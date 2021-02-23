@@ -823,13 +823,13 @@ contains
         ! print *,'Converged =',this%chem_status%converged,"ncuts =",ncuts,'(Substep 1)'
         
         ! The second one starts from the maximum number of cuts from the first one so it doesn't waste time retrying a bunch of failed timestep lengths
-        ! do ii=1,2**(max_cuts-(num_cuts+1))
-        !   call run_onestep(this, j,c, dt,ncuts,ncuts2)
-        !   if(ncuts2>max_cuts) max_cuts=ncuts2
+         do ii=1,2**(max_cuts-(num_cuts+1))
+           call run_onestep(this, j,c, dt,ncuts,ncuts2)
+           if(ncuts2>max_cuts) max_cuts=ncuts2
         !   print *,'Converged =',this%chem_status%converged,"ncuts =",ncuts2,'. Substep 2 +',ii
-        ! enddo
-        call run_onestep(this, j,c, dt,num_cuts+1,ncuts)
-        if(ncuts>max_cuts) max_cuts=ncuts
+         enddo
+        ! call run_onestep(this, j,c, dt,num_cuts+1,ncuts)
+        ! if(ncuts>max_cuts) max_cuts=ncuts
         ! print *,'Converged =',this%chem_status%converged,"ncuts =",ncuts,'(Substep 2)'
       endif
     endif
