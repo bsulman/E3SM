@@ -272,6 +272,10 @@ contains
     ! bgc & pflotran interface
     namelist /clm_inparm/ use_clm_interface, use_clm_bgc, use_pflotran
 
+    namelist /clm_inparm/ use_alquimia, alquimia_inputfile, alquimia_engine_name,&
+        alquimia_IC_name, alquimia_CO2_name, alquimia_NH4_name, &
+        alquimia_NO3_name, alquimia_handsoff
+
     namelist /clm_inparm/ use_dynroot
 
     namelist /clm_inparm/ use_var_soil_thick
@@ -565,6 +569,11 @@ contains
        endif
     endif
 
+    if (use_pflotran .and. use_alquimia) then
+        call endrun(msg=" ERROR: Cannot run with both run_alquimia and run_pflotran " // &
+                        errMsg(__FILE__, __LINE__))
+    endif
+
     if (masterproc) then
        write(iulog,*) 'Successfully initialized run control settings'
        write(iulog,*)
@@ -789,7 +798,18 @@ contains
     call mpi_bcast (use_clm_interface, 1, MPI_LOGICAL, 0, mpicom, ier)
     call mpi_bcast (use_clm_bgc, 1, MPI_LOGICAL, 0, mpicom, ier)
     call mpi_bcast (use_pflotran, 1, MPI_LOGICAL, 0, mpicom, ier)
-    
+  
+    ! alquimia interface controls
+    call mpi_bcast (use_alquimia, 1, MPI_LOGICAL, 0, mpicom, ier)
+    call mpi_bcast (alquimia_handsoff, 1, MPI_LOGICAL, 0, mpicom, ier)
+    call mpi_bcast (alquimia_inputfile , len(alquimia_inputfile) , MPI_CHARACTER, 0, mpicom, ier)
+    call mpi_bcast (alquimia_engine_name , len(alquimia_engine_name) , MPI_CHARACTER, 0, mpicom, ier)
+    call mpi_bcast (alquimia_IC_name , len(alquimia_IC_name) , MPI_CHARACTER, 0, mpicom, ier)
+    call mpi_bcast (alquimia_CO2_name , len(alquimia_CO2_name) , MPI_CHARACTER, 0, mpicom, ier)
+    call mpi_bcast (alquimia_NO3_name , len(alquimia_NO3_name) , MPI_CHARACTER, 0, mpicom, ier)
+    call mpi_bcast (alquimia_NH4_name , len(alquimia_NH4_name) , MPI_CHARACTER, 0, mpicom, ier)
+
+
     !cpl_bypass
      call mpi_bcast (metdata_type,   len(metdata_type),   MPI_CHARACTER, 0, mpicom, ier)
      call mpi_bcast (metdata_bypass, len(metdata_bypass), MPI_CHARACTER, 0, mpicom, ier)

@@ -351,7 +351,7 @@ contains
     use AlquimiaContainers_module, only : kAlquimiaMaxStringLength
 
     use clm_varpar, only : nlevdecomp, ndecomp_pools
-    use clm_varcon, only : istcrop,istsoil
+    use landunit_varcon, only : istcrop,istsoil
     use clm_varctl, only : alquimia_inputfile,alquimia_engine_name,alquimia_IC_name,alquimia_CO2_name,&
                            alquimia_NO3_name,alquimia_NH4_name,alquimia_handsoff
     use CNDecompCascadeConType, only : decomp_cascade_con
@@ -614,7 +614,8 @@ contains
     ! model during time integration stage
     !
     use clm_varpar, only : nlevdecomp,ndecomp_pools
-    use clm_varcon, only : istcrop,istsoil,catomw,natomw
+    use landunit_varcon, only : istcrop,istsoil
+    use clm_varcon, only : catomw,natomw
     use AlquimiaContainers_module, only : AlquimiaEngineStatus, kAlquimiaMaxStringLength
     use alquimia_fortran_interface_mod, only :  ReactionStepOperatorSplit, GetAuxiliaryOutput
     use, intrinsic :: iso_c_binding, only : C_CHAR, c_double, c_f_pointer

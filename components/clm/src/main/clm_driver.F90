@@ -163,6 +163,8 @@ module clm_driver
   use clm_interface_funcsMod      , only : update_bgc_data_pf2clm, update_th_data_pf2clm
   use clm_interface_pflotranMod   , only : clm_pf_run, clm_pf_write_restart
   use clm_interface_pflotranMod   , only : clm_pf_finalize
+  ! alquimia via EMI
+  use clm_varctl            , only : use_alquimia
   !----------------------------------------------------------------------------
   use WaterBudgetMod              , only : WaterBudget_Reset, WaterBudget_Run, WaterBudget_Accum, WaterBudget_Print
   use WaterBudgetMod              , only : WaterBudget_SetBeginningMonthlyStates
@@ -1025,7 +1027,6 @@ contains
                  end if !if (use_pflotran .and. pf_cmode)
              end if !if (use_clm_interface)
              !--------------------------------------------------------------------------------
-
              call EcosystemDynNoLeaching2(bounds_clump,                                   &
                    filter(nc)%num_soilc, filter(nc)%soilc,                                  &
                    filter(nc)%num_soilp, filter(nc)%soilp,                                  &

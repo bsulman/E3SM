@@ -545,6 +545,11 @@ contains
 !    use AllocationMod        , only: cnallocation
     use SoilLittDecompMod            , only: SoilLittDecompAlloc
     use SoilLittDecompMod            , only: SoilLittDecompAlloc2 !after SoilLittDecompAlloc
+    
+    use ExternalModelInterfaceMod , only: EMI_Driver
+    use ExternalModelConstants    , only: EM_ID_ALQUIMIA,EM_ALQUIMIA_SOLVE_STAGE
+    use clm_time_manager          , only: get_step_size_real
+    use clm_varctl                , only: use_alquimia
     !
     ! !ARGUMENTS:
     type(bounds_type)        , intent(in)    :: bounds
@@ -565,7 +570,7 @@ contains
     type(nitrogenflux_type)  , intent(inout) :: nitrogenflux_vars
     type(nitrogenstate_type) , intent(inout) :: nitrogenstate_vars
     type(atm2lnd_type)       , intent(in)    :: atm2lnd_vars
-    type(waterstate_type)    , intent(in)    :: waterstate_vars
+    type(waterstate_type)    , intent(inout) :: waterstate_vars ! BNS: must be inout to work with EMI_driver call, but not expected to change
     type(waterflux_type)     , intent(in)    :: waterflux_vars
     type(canopystate_type)   , intent(in)    :: canopystate_vars
     type(soilstate_type)     , intent(inout) :: soilstate_vars
@@ -586,11 +591,26 @@ contains
     ! only do if ed is off
     if( .not. use_fates ) then
 
-       call t_startf('SoilLittDecompAlloc')
        !----------------------------------------------------------------
-       if(.not.use_clm_interface) then
-            ! directly run clm-bgc
-            ! if (use_clm_interface & use_clm_bgc), then CNDecomAlloc is called in clm_driver
+
+       if (use_alquimia) then
+          call t_startf('bgc via alquimia interface')
+        
+          call EMI_Driver(                                                 &
+              em_id             = EM_ID_ALQUIMIA                    , &
+              em_stage          = EM_ALQUIMIA_SOLVE_STAGE            , &
+              dt                = get_step_size_real()                    , &
+              soilstate_vars    = soilstate_vars                        , &
+              carbonstate_vars  = carbonstate_vars                      , &
+              carbonflux_vars   = carbonflux_vars                       , &
+              nitrogenstate_vars= nitrogenstate_vars                , &
+              waterstate_vars   = waterstate_vars                       , &
+              temperature_vars  = temperature_vars)
+          
+          call t_stopf('bgc via alquimia interface')
+     
+       elseif( .not.use_clm_interface) then
+            call t_startf('SoilLittDecompAlloc')
             call SoilLittDecompAlloc (bounds, num_soilc, filter_soilc,    &
                        num_soilp, filter_soilp,                     &
                        canopystate_vars, soilstate_vars,            &

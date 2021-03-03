@@ -407,6 +407,18 @@ module clm_varctl
   logical, public :: initth_pf2clm= .false.                 ! switch for initializing CLM TH states from pflotran
   integer, public :: pf_clmnstep0 = 0                       ! the CLM timestep of start/restart
 
+  !----------------------------------------------------------
+  ! Alquimia external model
+  !----------------------------------------------------------
+  logical, public           :: use_alquimia         = .false.
+  character(len=32), public :: alquimia_inputfile   = 'alquimia_io/pflotran.in'
+  character(len=32), public :: alquimia_engine_name = 'pflotran'
+  character(len=32), public :: alquimia_IC_name     = 'initial' ! Initial condition
+  character(len=32), public :: alquimia_CO2_name    = 'CO2(aq)' ! Name of CO2 in reaction network
+  character(len=32), public :: alquimia_NH4_name    = 'NH4+' ! Name of NH4 in reaction network
+  character(len=32), public :: alquimia_NO3_name    = 'NO3-' ! Name in reaction network
+  logical, public           :: alquimia_handsoff    = .false.
+
   ! cpl_bypass
    character(len=fname_len), public :: metdata_type   = ' '    ! metdata type for CPL_BYPASS mode
    character(len=fname_len), public :: metdata_bypass = ' '    ! met data directory for CPL_BYPASS mode (site, qian, cru_ncep)

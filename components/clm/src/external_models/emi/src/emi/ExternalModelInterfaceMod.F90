@@ -87,7 +87,7 @@ contains
 #endif
     use clm_varctl, only : use_petsc_thermal_model
     use clm_varctl, only : use_em_stub
-    use clm_varctl, only : use_em_alquimia
+    use clm_varctl, only : use_alquimia
     !
     implicit none
     !
@@ -126,7 +126,7 @@ contains
     endif
     
     ! Is Alquimia EM active?
-    if (use_em_alquimia) then
+    if (use_alquimia) then
        num_em            = num_em + 1
        index_em_alquimia     = num_em
        allocate(em_alquimia(nclumps))
