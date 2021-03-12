@@ -225,6 +225,26 @@ ifeq ($(strip $(USE_PETSC)), TRUE)
 
 endif
 
+
+# Set PFLOTRAN info if it is being used
+ifeq ($(strip $(USE_PFLOTRAN)), TRUE)
+  ifndef PFLOTRAN_INC
+    $(error PFLOTRAN_INC must be defined when USE_PFLOTRAN is TRUE)
+  endif
+  ifndef PFLOTRAN_LIB
+    $(error PFLOTRAN_LIB must be defined when USE_PFLOTRAN is TRUE)
+  endif
+endif
+# Set Alquimia info if it is being used
+ifeq ($(strip $(USE_ALQUIMIA)), TRUE)
+  ifndef ALQUIMIA_INC
+    $(error ALQUIMIA_INC must be defined when USE_ALQUIMIA is TRUE)
+  endif
+  ifndef ALQUIMIA_LIB
+    $(error ALQUIMIA_LIB must be defined when USE_ALQUIMIA is TRUE)
+  endif
+endif
+
 # Set Trilinos info if it is being used
 ifeq ($(strip $(USE_TRILINOS)), TRUE)
   ifdef TRILINOS_PATH
@@ -474,6 +494,12 @@ endif
 ifdef INC_PETSC
   INCLDIR += -I$(INC_PETSC)
 endif
+ifdef PFLOTRAN_INC
+  INCLDIR += -I$(PFLOTRAN_INC)
+endif
+ifdef ALQUIMIA_INC
+  INCLDIR += -I$(ALQUIMIA_INC)
+endif
 ifdef INC_TRILINOS
   INCLDIR += -I$(INC_TRILINOS)
 endif
@@ -617,7 +643,15 @@ endif
 
 # Add PETSc libraries
 ifeq ($(strip $(USE_PETSC)), TRUE)
-  SLIBS += ${PETSC_LIB}
+  SLIBS += $(PETSC_LIB)
+endif
+# Add PFLOTRAN libraries
+ifeq ($(strip $(USE_PFLOTRAN)), TRUE)
+  SLIBS += $(PFLOTRAN_LIB)
+endif
+# Add ALQUIMIA libraries
+ifeq ($(strip $(USE_ALQUIMIA)), TRUE)
+  SLIBS += $(ALQUIMIA_LIB)
 endif
 
 # Add trilinos libraries; too be safe, we include all libraries included in the trilinos build,

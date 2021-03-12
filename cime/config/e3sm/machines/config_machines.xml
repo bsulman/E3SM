@@ -2136,8 +2136,8 @@
     <COMPILERS>gnu,intel</COMPILERS>
     <MPILIBS>openmpi</MPILIBS>
     <CIME_OUTPUT_ROOT>/lustre/or-hydra/cades-ccsi/scratch/$USER</CIME_OUTPUT_ROOT>
-    <DIN_LOC_ROOT>/lustre/or-hydra/cades-ccsi/proj-shared/project_acme/ACME_inputdata</DIN_LOC_ROOT>
-    <DIN_LOC_ROOT_CLMFORC>/lustre/or-hydra/cades-ccsi/proj-shared/project_acme/ACME_inputdata/atm/datm7</DIN_LOC_ROOT_CLMFORC>
+    <DIN_LOC_ROOT>/nfs/data/ccsi/proj-shared/E3SM/inputdata</DIN_LOC_ROOT>
+    <DIN_LOC_ROOT_CLMFORC>/nfs/data/ccsi/proj-shared/E3SM/inputdata/atm/datm7</DIN_LOC_ROOT_CLMFORC>
     <DOUT_S_ROOT>$CIME_OUTPUT_ROOT/archive/$CASE</DOUT_S_ROOT>
     <BASELINE_ROOT>/lustre/or-hydra/cades-ccsi/proj-shared/project_acme/baselines/$COMPILER</BASELINE_ROOT>
     <CCSM_CPRNC>/lustre/or-hydra/cades-ccsi/proj-shared/tools/cprnc.orcondo</CCSM_CPRNC>
@@ -2187,11 +2187,13 @@
                             desired layout (change '${group}/${USER}' to your
       prefered location). -->
     <RUNDIR>$CIME_OUTPUT_ROOT/$CASE/run</RUNDIR>
-    <EXEROOT>$CIME_OUTPUT_ROOT/$CASE/bld</EXEROOT>
-    <!-- for CLM-PFLOTRAN coupling, the PETSC_PATH must be defined specifically upon machines -->
-    <environment_variables compiler="gnu" mpilib="openmpi">
-      <env name="PETSC_PATH">/software/user_tools/current/cades-ccsi/petsc4pf/openmpi-1.10-gcc-5.3</env>
-    </environment_variables>
+    <EXEROOT>$HOME/cases/$CASE/bld</EXEROOT>
+
+    <!--
+         hack for PFLOTRAN coupling to build ELM model.
+         this is a temporary solution, and user must manually edit the following after cloning codes.
+         By default, model will build as PFLOTRAN coupled and run as non-coupled.
+    -->
     <environment_variables>
       <env name="PERL5LIB">/software/user_tools/current/cades-ccsi/perl5/lib/perl5/</env>
         <!-- for CLM-PFLOTRAN coupling, the $PETSC_DIR and $CLM_PFLOTRAN_SOURCE_DIR must be user-defined specifically upon machines, e.g. in .bashrc -->
@@ -2204,12 +2206,12 @@
                  ' -L$ENV{PETSC_DIR}/lib -lpetsc -lparmetis -lmetis $ENV{MKLROOT_LIB} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential' in 'PFLOTTRAN_LIB' -->
         <env name="PETSC_PATH">/software/user_tools/current/cades-ccsi/petsc-x/openmpi-1.10-gcc-5.3</env>
         <env name="PETSC_ARCH"></env> <!-- this is needed for cmake list of CLM_USE_PETSC, default by 'null' if installed PETSc rather than Built only -->
-        <!--<env name="PETSC_LIB">/software/user_tools/current/cades-ccsi/petsc-x/openmpi-1.10-gcc-5.3/lib</env> 
-        <env name="BLASLAPACK_LIBDIR">/software/user_tools/current/cades-ccsi/petsc-x/openmpi-1.10-gcc-5.3/lib</env> -->
-	      <!-- <env name="PFLOTRAN_INC"> -I$ENV{CLM_PFLOTRAN_SOURCE_DIR} </env> -->
-        <!-- env name="PFLOTRAN_LIB"> -L$ENV{CLM_PFLOTRAN_SOURCE_DIR} -lpflotran </env>
-             note that still needs PETSc libs explicitly on CADES probably due to older GCC -->
-        <!-- <env name="PFLOTRAN_LIB"> -L$ENV{CLM_PFLOTRAN_SOURCE_DIR} -lpflotran -L$ENV{PETSC_PATH}/lib -lpetsc -lparmetis -lmetis </env> -->
+        <env name="PFLOTRAN_INC"> -I$ENV{CLM_PFLOTRAN_SOURCE_DIR} -I$ENV{PETSC_PATH}/include</env>
+        <!-- 2021-01-28: PETSc libraries rebuilt as shared libraries on CADES, so need to set '-Wl,-rpath,', otherwise may cause issue of no libraries found when submit job -->
+        <env name="PFLOTRAN_LIB"> -L$ENV{CLM_PFLOTRAN_SOURCE_DIR} -lpflotran -L$ENV{PETSC_PATH}/lib -lpetsc -Wl,-rpath,$ENV{PETSC_PATH}/lib </env>
+      <env name="PERL5LIB">/software/user_tools/current/cades-ccsi/perl5/lib/perl5/</env>
+      <env name="ALQUIMIA_LIB"> -L$ENV{ALQUIMIA_DIR} -lalquimia </env>
+      <env name="ALQUIMIA_INC"> -I$ENV{ALQUIMIA_DIR} </env>
     </environment_variables>
   </machine>
 
