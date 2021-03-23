@@ -13,6 +13,7 @@ module pftvarcon
   use clm_varctl  , only : iulog, use_vertsoilc
   use clm_varpar  , only : nlevdecomp_full, nsoilorder
   use clm_varctl  , only : nu_com
+  use clm_varpar  , only : max_tide_coeffs
   !
   ! !PUBLIC TYPES:
   implicit none
@@ -272,6 +273,12 @@ module pftvarcon
   real(r8)              :: humhol_ht
   real(r8)              :: hum_frac
   real(r8)              :: humhol_dist
+! Tidal cycle controls
+  integer               :: num_tide_comps      ! Number of tidal cycle components
+  real(r8)              :: tide_baseline            ! Base tide level (mean of cycle) (mm)
+  real(r8),allocatable  :: tide_coeff_amp(:)            ! Amplitude of tide component (mm)
+  real(r8),allocatable  :: tide_coeff_period(:)        ! Period of tide component (s)
+  real(r8),allocatable  :: tide_coeff_phase(:)         ! Phase shift of tide component (s)
 !endif
   !phenology
   real(r8)              :: phen_a
@@ -337,6 +344,8 @@ contains
     integer :: npft             ! number of pfts on pft-physiology file
     logical :: readv            ! read variable in or not
     character(len=32) :: subname = 'pftconrd'              ! subroutine name
+
+    character(len=256) :: tempname ! For use in reading parameter names from netcdf file
     !
     ! Expected PFT names: The names expected on the paramfile file and the order they are expected to be in.
     ! NOTE: similar types are assumed to be together, first trees (ending with broadleaf_deciduous_boreal_tree
@@ -548,6 +557,12 @@ contains
     ! Ground cover for soil erosion
     allocate( gcpsi              (0:mxpft) )
     allocate( pftcc              (0:mxpft) )
+
+
+    ! Tidal cycle coefficients
+    allocate( tide_coeff_amp (max_tide_coeffs))
+    allocate( tide_coeff_phase (max_tide_coeffs))
+    allocate( tide_coeff_period (max_tide_coeffs))
 
     ! Set specific vegetation type values
 
@@ -901,6 +916,39 @@ contains
 !    if ( .not. readv) call endrun(msg='ERROR:  error in reading in pft data'//errMsg(__FILE__,__LINE__))
     call ncd_io('qflx_h2osfc_surfrate', qflx_h2osfc_surfrate, 'read', ncid, readvar=readv, posNOTonfile=.true.)
 !    if ( .not. readv) call endrun(msg='ERROR:  error in reading in pft data'//errMsg(__FILE__,__LINE__))
+#ifdef MARSH
+! Tidal cycle parameters
+    ! Defaults from Teri's hard coded numbers
+    ! Multiple parameters specified in params file like tide_coeff_amp_1, tide_coeff_amp_2, ...
+    call ncd_io('tide_baseline',tide_baseline, 'read', ncid, readvar=readv, posNOTonfile=.true.)
+    if (.not. readv) tide_baseline = 800.0_r8
+    do i=1,max_tide_coeffs
+      write(tempname,'(I0)') i
+      call ncd_io('tide_coeff_amp_'//trim(tempname),tide_coeff_amp(i), 'read', ncid, readvar=readv, posNOTonfile=.true.)
+      if (.not. readv) then
+         write(iulog,*) "Stopped looking for tidal components after not finding ",'tide_coeff_amp_'//trim(tempname)
+         num_tide_comps=i-1
+         exit
+      else
+         num_tide_comps=i
+      endif
+      call ncd_io('tide_coeff_period_'//trim(tempname),tide_coeff_period(i), 'read', ncid, readvar=readv, posNOTonfile=.true.)
+      if (.not. readv) call endrun(msg="Error: Must specify amp, period, and phase for each tide component: i = "//trim(tempname))
+      call ncd_io('tide_coeff_phase_'//trim(tempname),tide_coeff_phase(i), 'read', ncid, readvar=readv, posNOTonfile=.true.)
+      if (.not. readv) call endrun(msg="Error: Must specify amp, period, and phase for each tide component: i = "//trim(tempname))
+   enddo
+   if(num_tide_comps == 0) then
+      write(iulog,*) "No tidal coefficients found in parameter file. Using Teri's 2-component fit values for GCREW site as default"
+      num_tide_comps = 2
+      tide_coeff_amp(1) = 250.0_r8
+      tide_coeff_amp(2) = 1.0/0.91518
+      tide_coeff_period(1) = 1.0/0.00003
+      tide_coeff_period(2) = 1.0/0.00000001
+      tide_coeff_phase(1) = 513.4328
+      tide_coeff_phase(2) = 0.0
+   endif
+#endif
+
     call ncd_io('phen_a', phen_a, 'read', ncid, readvar=readv, posNOTonfile=.true.)
 !    if ( .not. readv) call endrun(msg='ERROR:  error in reading in pft data'//errMsg(__FILE__,__LINE__))
     call ncd_io('phen_b', phen_b, 'read', ncid, readvar=readv, posNOTonfile=.true.)
