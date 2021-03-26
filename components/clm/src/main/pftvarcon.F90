@@ -563,6 +563,10 @@ contains
     allocate( tide_coeff_amp (max_tide_coeffs))
     allocate( tide_coeff_phase (max_tide_coeffs))
     allocate( tide_coeff_period (max_tide_coeffs))
+    ! Values should be ignored past num_tide_comps but initialize to be sure
+    tide_coeff_amp(:)    = 0.0
+    tide_coeff_phase(:)  = 0.0
+    tide_coeff_period(:) = 1.0 ! Making period 0 would cause divide by 0 error in sinusoid calculation
 
     ! Set specific vegetation type values
 
