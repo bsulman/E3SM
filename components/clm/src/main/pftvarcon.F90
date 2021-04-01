@@ -913,13 +913,13 @@ contains
     !data'//errMsg(__FILE__,__LINE__))
 !if (defined HUM_HOL)
     call ncd_io('humhol_ht', humhol_ht, 'read', ncid, readvar=readv, posNOTonfile=.true.)
-!    if ( .not. readv) call endrun(msg='ERROR:  error in reading in pft data'//errMsg(__FILE__,__LINE__))
+    if ( .not. readv) humhol_ht = 0.15_r8
     call ncd_io('humhol_dist', humhol_dist, 'read', ncid, readvar=readv, posNOTonfile=.true.)
-!    if ( .not. readv) call endrun(msg='ERROR:  error in reading in pft data'//errMsg(__FILE__,__LINE__))
+    if ( .not. readv) humhol_dist = 1.0_r8
     call ncd_io('hum_frac', hum_frac, 'read', ncid, readvar=readv, posNOTonfile=.true.)
-!    if ( .not. readv) call endrun(msg='ERROR:  error in reading in pft data'//errMsg(__FILE__,__LINE__))
+    if ( .not. readv) hum_frac = 0.5_r8
     call ncd_io('qflx_h2osfc_surfrate', qflx_h2osfc_surfrate, 'read', ncid, readvar=readv, posNOTonfile=.true.)
-!    if ( .not. readv) call endrun(msg='ERROR:  error in reading in pft data'//errMsg(__FILE__,__LINE__))
+    if ( .not. readv) qflx_h2osfc_surfrate = 1.0e-7_r8
 #ifdef MARSH
 ! Tidal cycle parameters
     ! Defaults from Teri's hard coded numbers
