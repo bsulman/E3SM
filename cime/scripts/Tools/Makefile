@@ -227,7 +227,7 @@ endif
 
 
 # Set PFLOTRAN info if it is being used
-ifeq ($(strip $(USE_PFLOTRAN)), TRUE)
+ifeq ($(strip $(CLM_USE_PFLOTRAN)), TRUE)
   ifndef PFLOTRAN_INC
     $(error PFLOTRAN_INC must be defined when USE_PFLOTRAN is TRUE)
   endif
@@ -236,12 +236,12 @@ ifeq ($(strip $(USE_PFLOTRAN)), TRUE)
   endif
 endif
 # Set Alquimia info if it is being used
-ifeq ($(strip $(USE_ALQUIMIA)), TRUE)
-  ifndef ALQUIMIA_INC
-    $(error ALQUIMIA_INC must be defined when USE_ALQUIMIA is TRUE)
-  endif
-  ifndef ALQUIMIA_LIB
-    $(error ALQUIMIA_LIB must be defined when USE_ALQUIMIA is TRUE)
+ifeq ($(strip $(CLM_USE_ALQUIMIA)), TRUE)
+  ifndef ALQUIMIA_PATH
+    $(error ALQUIMIA_PATH must be defined when CLM_USE_ALQUIMIA is TRUE)
+  else
+    ALQUIMIA_INC:=$(ALQUIMIA_PATH)
+    ALQUIMIA_LIB:=$(ALQUIMIA_PATH)
   endif
 endif
 
@@ -650,8 +650,8 @@ ifeq ($(strip $(USE_PFLOTRAN)), TRUE)
   SLIBS += $(PFLOTRAN_LIB)
 endif
 # Add ALQUIMIA libraries
-ifeq ($(strip $(USE_ALQUIMIA)), TRUE)
-  SLIBS += $(ALQUIMIA_LIB)
+ifeq ($(strip $(CLM_USE_ALQUIMIA)), TRUE)
+  SLIBS += -L$(ALQUIMIA_LIB) -lalquimia -Wl,-rpath,$(ALQUIMIA_LIB)
 endif
 
 # Add trilinos libraries; too be safe, we include all libraries included in the trilinos build,

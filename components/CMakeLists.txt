@@ -230,6 +230,20 @@ if (USE_PETSC)
   set(PETSC_LIB ${PETSC_LIBRARIES})
 endif()
 
+# Set Alquimia info if it is being used
+if (CLM_USE_ALQUIMIA)
+  if (NOT ALQUIMIA_PATH)
+    message(FATAL_ERROR "ALQUIMIA_PATH must be defined when CLM_USE_ALQUIMIA is TRUE")
+  else()
+    if (NOT ALQUIMIA_INC)
+      set(ALQUIMIA_INC ${ALQUIMIA_PATH})
+    endif()
+    if (NOT ALQUIMIA_LIB)
+      set(ALQUIMIA_LIB ${ALQUIMIA_PATH})
+    endif()
+  endif()
+endif()
+
 if (USE_TRILINOS)
   if (TRILINOS_PATH)
     if (NOT INC_TRILINOS)
@@ -407,7 +421,7 @@ else()
   set(INCLDIR "${INCLDIR} -I${INC_NETCDF_C} -I${INC_NETCDF_FORTRAN}")
 endif()
 
-foreach(ITEM MOD_NETCDF INC_MPI INC_PNETCDF INC_PETSC INC_TRILINOS INC_ALBANY) # INC_MOAB)
+foreach(ITEM MOD_NETCDF INC_MPI INC_PNETCDF INC_PETSC INC_TRILINOS INC_ALBANY ALQUIMIA_INC) # INC_MOAB)
   if (${ITEM})
     set(INCLDIR "${INCLDIR} -I${${ITEM}}")
   endif()
@@ -513,6 +527,10 @@ endif()
 # Add PETSc libraries
 if (USE_PETSC)
   set(SLIBS "${SLIBS} ${PETSC_LIB}")
+endif()
+
+if (CLM_USE_ALQUIMIA)
+  set(SLIBS "${SLIBS} -L${ALQUIMIA_LIB} -lalquimia -Wl,-rpath,${ALQUIMIA_LIB}")
 endif()
 
 # Add trilinos libraries; too be safe, we include all libraries included in the trilinos build,

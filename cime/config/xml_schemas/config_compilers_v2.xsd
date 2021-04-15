@@ -187,6 +187,7 @@
       <xs:element name="SLIBS" type="flagsVar"/>
       <xs:element name="SUPPORTS_CXX" type="upperBoolean"/>
       <xs:element name="TRILINOS_PATH" type="systemPath"/>
+      <xs:element name="ALQUIMIA_PATH" type="systemPath"/>
     </xs:choice>
   </xs:group>
 

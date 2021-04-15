@@ -2210,8 +2210,6 @@
         <!-- 2021-01-28: PETSc libraries rebuilt as shared libraries on CADES, so need to set '-Wl,-rpath,', otherwise may cause issue of no libraries found when submit job -->
         <env name="PFLOTRAN_LIB"> -L$ENV{CLM_PFLOTRAN_SOURCE_DIR} -lpflotran -L$ENV{PETSC_PATH}/lib -lpetsc -Wl,-rpath,$ENV{PETSC_PATH}/lib </env>
       <env name="PERL5LIB">/software/user_tools/current/cades-ccsi/perl5/lib/perl5/</env>
-      <env name="ALQUIMIA_LIB"> -L$ENV{ALQUIMIA_DIR} -lalquimia </env>
-      <env name="ALQUIMIA_INC"> -I$ENV{ALQUIMIA_DIR} </env>
     </environment_variables>
   </machine>
 
