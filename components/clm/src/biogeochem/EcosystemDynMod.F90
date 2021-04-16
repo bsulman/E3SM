@@ -39,6 +39,7 @@ module EcosystemDynMod
   use ColumnDataType      , only : col_cf, c13_col_cf, c14_col_cf
   use ColumnDataType      , only : col_ns, col_nf
   use ColumnDataType      , only : col_ps, col_pf
+  use ColumnDataType      , only : col_es
   use VegetationDataType  , only : veg_cs, c13_veg_cs, c14_veg_cs
   use VegetationDataType  , only : veg_cf, c13_veg_cf, c14_veg_cf
   use VegetationDataType  , only : veg_ns, veg_nf
@@ -596,16 +597,19 @@ contains
        if (use_alquimia) then
           call t_startf('bgc via alquimia interface')
         
-          call EMI_Driver(                                                 &
-              em_id             = EM_ID_ALQUIMIA                    , &
-              em_stage          = EM_ALQUIMIA_SOLVE_STAGE            , &
-              dt                = get_step_size_real()                    , &
-              soilstate_vars    = soilstate_vars                        , &
-              carbonstate_vars  = carbonstate_vars                      , &
-              carbonflux_vars   = carbonflux_vars                       , &
-              nitrogenstate_vars= nitrogenstate_vars                , &
-              waterstate_vars   = waterstate_vars                       , &
-              temperature_vars  = temperature_vars)
+          call EMI_Driver(                                    &
+              em_id             = EM_ID_ALQUIMIA            , &
+              em_stage          = EM_ALQUIMIA_SOLVE_STAGE   , &
+              clump_rank        = bounds%clump_index        , &
+              dt                = get_step_size_real()      , &
+              soilstate_vars    = soilstate_vars            , &
+              carbonstate_vars  = col_cs                    , &
+              carbonflux_vars   = col_cf                    , &
+              nitrogenstate_vars= col_ns                    , &
+              waterstate_vars   = waterstate_vars           , &
+              num_soilc         = num_soilc                 , &
+              filter_soilc      = filter_soilc              , &
+              col_es            = col_es)
           
           call t_stopf('bgc via alquimia interface')
      

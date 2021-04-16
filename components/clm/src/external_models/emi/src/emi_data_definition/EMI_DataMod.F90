@@ -1468,6 +1468,28 @@ contains
           dim1_end_name = dimname_one
           data_found    = .true.
 
+      case (L2E_FILTER_SOILC)
+         id_val        = L2E_FILTER_SOILC
+         name_val      = 'Soil filter'
+         long_name_val = 'Soil filter: ALM to External Model'
+         units_val     = '[-]'
+         is_int_type   = .true.
+         ndim          = 1
+         dim1_beg_name = dimname_one
+         dim1_end_name = dimname_col_one_based_idx
+         data_found    = .true.
+
+      case (L2E_FILTER_NUM_SOILC)
+         id_val        = L2E_FILTER_NUM_SOILC
+         name_val      = 'Number of soil filter'
+         long_name_val = 'Number of soil filter: ALM to External Model'
+         units_val     = '[-]'
+         is_int_type   = .true.
+         ndim          = 1
+         dim1_beg_name = dimname_one
+         dim1_end_name = dimname_one
+         data_found    = .true.
+
        case (L2E_FILTER_NOLAKEC)
           id_val        = L2E_FILTER_HYDROLOGYC
           name_val      = 'Non-lake filter'

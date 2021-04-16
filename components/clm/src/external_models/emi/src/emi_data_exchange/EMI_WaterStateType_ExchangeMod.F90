@@ -8,12 +8,12 @@ module EMI_WaterStateType_ExchangeMod
   use EMI_DataDimensionMod                  , only : emi_data_dimension_list_type
   use WaterStateType       , only : waterstate_type
   use EMI_Atm2LndType_Constants
-  use EMI_CNCarbonFluxType_Constants
-  use EMI_CNCarbonStateType_Constants
-  use EMI_CNNitrogenStateType_Constants
   use EMI_CanopyStateType_Constants
   use EMI_ChemStateType_Constants
-  use EMI_ColumnDataType_Constants
+  use EMI_CNCarbonStateType_Constants
+  use EMI_CNNitrogenStateType_Constants
+  use EMI_CNCarbonFluxType_Constants
+  use EMI_ColumnEnergyStateType_Constants
   use EMI_EnergyFluxType_Constants
   use EMI_SoilHydrologyType_Constants
   use EMI_SoilStateType_Constants

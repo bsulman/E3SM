@@ -6,14 +6,14 @@ module EMI_CNCarbonFluxType_ExchangeMod
   use clm_varctl                            , only : iulog
   use EMI_DataMod                           , only : emi_data_list, emi_data
   use EMI_DataDimensionMod                  , only : emi_data_dimension_list_type
-  use CNCarbonFluxType     , only : carbonflux_type
+  use ColumnDataType       , only : column_carbon_flux
   use EMI_Atm2LndType_Constants
-  use EMI_CNCarbonFluxType_Constants
-  use EMI_CNCarbonStateType_Constants
-  use EMI_CNNitrogenStateType_Constants
   use EMI_CanopyStateType_Constants
   use EMI_ChemStateType_Constants
-  use EMI_ColumnDataType_Constants
+  use EMI_CNCarbonStateType_Constants
+  use EMI_CNNitrogenStateType_Constants
+  use EMI_CNCarbonFluxType_Constants
+  use EMI_ColumnEnergyStateType_Constants
   use EMI_EnergyFluxType_Constants
   use EMI_SoilHydrologyType_Constants
   use EMI_SoilStateType_Constants
@@ -34,10 +34,10 @@ contains
   
 !-----------------------------------------------------------------------
   subroutine EMI_Pack_CNCarbonFluxType_at_Column_Level_for_EM(data_list, em_stage, &
-        num_filter, filter, carbonflux_vars)
+        num_filter, filter, col_cf)
     !
     ! !DESCRIPTION:
-    ! Pack data from ALM carbonflux_vars for EM
+    ! Pack data from ALM col_cf for EM
     !
     ! !USES:
     use clm_varpar             , only : nlevdecomp_full
@@ -46,11 +46,11 @@ contains
     implicit none
     !
     ! !ARGUMENTS:
-    class(emi_data_list)   , intent(in) :: data_list
-    integer                , intent(in) :: em_stage
-    integer                , intent(in) :: num_filter
-    integer                , intent(in) :: filter(:)
-    type(carbonflux_type)  , intent(in) :: carbonflux_vars
+    class(emi_data_list)     , intent(in) :: data_list
+    integer                  , intent(in) :: em_stage
+    integer                  , intent(in) :: num_filter
+    integer                  , intent(in) :: filter(:)
+    type(column_carbon_flux) , intent(in) :: col_cf
     !
     ! !LOCAL_VARIABLES:
     integer                             :: fc,c,j,k
@@ -60,9 +60,9 @@ contains
     integer                             :: count
 
     associate(& 
-         decomp_cascade_hr_vr_col => carbonflux_vars%decomp_cascade_hr_vr_col , &
-         hr_vr_col                => carbonflux_vars%hr_vr_col                , &
-         decomp_k_col             => carbonflux_vars%decomp_k_col               &
+         decomp_cascade_hr_vr => col_cf%decomp_cascade_hr_vr , &
+         hr_vr                => col_cf%hr_vr                , &
+         decomp_k             => col_cf%decomp_k               &
          )
 
     count = 0
@@ -88,7 +88,7 @@ contains
                 c = filter(fc)
                 do j = 1, nlevdecomp_full
                    do k = 1, ndecomp_pools
-                      cur_data%data_real_3d(c,j,k) = decomp_cascade_hr_vr_col(c,j,k)
+                      cur_data%data_real_3d(c,j,k) = decomp_cascade_hr_vr(c,j,k)
                    enddo
                 enddo
              enddo
@@ -98,7 +98,7 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevdecomp_full
-                   cur_data%data_real_2d(c,j) = hr_vr_col(c,j)
+                   cur_data%data_real_2d(c,j) = hr_vr(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -108,7 +108,7 @@ contains
                 c = filter(fc)
                 do j = 1, nlevdecomp_full
                    do k = 1, ndecomp_pools
-                      cur_data%data_real_3d(c,j,k) = decomp_k_col(c,j,k)
+                      cur_data%data_real_3d(c,j,k) = decomp_k(c,j,k)
                    enddo
                 enddo
              enddo
@@ -127,10 +127,10 @@ contains
 
 !-----------------------------------------------------------------------
   subroutine EMI_Unpack_CNCarbonFluxType_at_Column_Level_from_EM(data_list, em_stage, &
-        num_filter, filter, carbonflux_vars)
+        num_filter, filter, col_cf)
     !
     ! !DESCRIPTION:
-    ! Unpack data for ALM carbonflux_vars from EM
+    ! Unpack data for ALM col_cf from EM
     !
     ! !USES:
     use clm_varpar             , only : nlevdecomp_full
@@ -139,11 +139,11 @@ contains
     implicit none
     !
     ! !ARGUMENTS:
-    class(emi_data_list)   , intent(in) :: data_list
-    integer                , intent(in) :: em_stage
-    integer                , intent(in) :: num_filter
-    integer                , intent(in) :: filter(:)
-    type(carbonflux_type)  , intent(in) :: carbonflux_vars
+    class(emi_data_list)     , intent(in) :: data_list
+    integer                  , intent(in) :: em_stage
+    integer                  , intent(in) :: num_filter
+    integer                  , intent(in) :: filter(:)
+    type(column_carbon_flux) , intent(in) :: col_cf
     !
     ! !LOCAL_VARIABLES:
     integer                             :: fc,c,j,k
@@ -153,8 +153,8 @@ contains
     integer                             :: count
 
     associate(& 
-         decomp_cascade_hr_vr_col => carbonflux_vars%decomp_cascade_hr_vr_col , &
-         hr_vr_col                => carbonflux_vars%hr_vr_col                  &
+         decomp_cascade_hr_vr => col_cf%decomp_cascade_hr_vr , &
+         hr_vr                => col_cf%hr_vr                  &
          )
 
     count = 0
@@ -180,7 +180,7 @@ contains
                 c = filter(fc)
                 do j = 1, nlevdecomp_full
                    do k = 1, ndecomp_pools
-                      decomp_cascade_hr_vr_col(c,j,k) = cur_data%data_real_3d(c,j,k)
+                      decomp_cascade_hr_vr(c,j,k) = cur_data%data_real_3d(c,j,k)
                    enddo
                 enddo
              enddo
@@ -190,7 +190,7 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevdecomp_full
-                   hr_vr_col(c,j) = cur_data%data_real_2d(c,j)
+                   hr_vr(c,j) = cur_data%data_real_2d(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.

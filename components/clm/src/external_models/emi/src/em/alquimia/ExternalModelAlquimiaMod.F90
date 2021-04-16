@@ -37,21 +37,16 @@ module ExternalModelAlquimiaMod
 
   type, public, extends(em_base_type) :: em_alquimia_type
     ! Initialization data needed
-    integer :: index_l2e_init_col_type
-    integer :: index_l2e_init_lunit_index
-    integer :: index_l2e_init_col_active
-    integer :: index_l2e_init_col_grid_ind
-    integer :: index_l2e_init_lunit_type
-    integer :: index_l2e_init_col_wgt
+    integer :: index_l2e_init_filter_soilc
+    integer :: index_l2e_init_filter_num_soilc
     integer :: index_l2e_init_state_watsatc ! Porosity
     integer :: index_l2e_init_state_temperature_soil
     integer :: index_l2e_init_state_h2osoi_liq
     integer :: index_l2e_init_state_h2osoi_ice
     
     ! Solve data needed
-    integer :: index_l2e_col_active
-    integer :: index_l2e_lunit_type
-    integer :: index_l2e_lunit_index
+    integer :: index_l2e_filter_soilc
+    integer :: index_l2e_filter_num_soilc
     integer :: index_l2e_state_h2osoi_liq
     integer :: index_l2e_state_h2osoi_ice
     integer :: index_l2e_state_decomp_cpools
@@ -137,26 +132,14 @@ contains
     allocate(em_stages(number_em_stages))
     em_stages(1) = EM_INITIALIZATION_STAGE
 
-    ! id                                             = L2E_COLUMN_TYPE
-    ! call l2e_init_list%AddDataByID(id, number_em_stages, em_stages, index)
-    ! this%index_l2e_init_col_type              = index
-    
-    id                                             = L2E_COLUMN_LANDUNIT_INDEX
+    id                                   = L2E_FILTER_SOILC
     call l2e_init_list%AddDataByID(id, number_em_stages, em_stages, index)
-    this%index_l2e_init_lunit_index              = index
-    
-    id                                             = L2E_COLUMN_ACTIVE
+    this%index_l2e_init_filter_soilc     = index
+
+    id                                   = L2E_FILTER_NUM_SOILC
     call l2e_init_list%AddDataByID(id, number_em_stages, em_stages, index)
-    this%index_l2e_init_col_active              = index
-    
-    ! id                                             = L2E_COLUMN_GRIDCELL_INDEX
-    ! call l2e_init_list%AddDataByID(id, number_em_stages, em_stages, index)
-    ! this%index_l2e_init_col_grid_ind              = index
-    
-    id                                             = L2E_LANDUNIT_TYPE
-    call l2e_init_list%AddDataByID(id, number_em_stages, em_stages, index)
-    this%index_l2e_init_lunit_type              = index
-    
+    this%index_l2e_init_filter_num_soilc = index
+
     id                                             = L2E_PARAMETER_WATSATC
     call l2e_init_list%AddDataByID(id, number_em_stages, em_stages, index)
     this%index_l2e_init_state_watsatc              = index
@@ -222,18 +205,14 @@ contains
     em_stages(1) = EM_Alquimia_SOLVE_STAGE
 
 
-    id                                             = L2E_COLUMN_LANDUNIT_INDEX
+    id                                   = L2E_FILTER_SOILC
     call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
-    this%index_l2e_lunit_index              = index
-    
-    id                                             = L2E_COLUMN_ACTIVE
+    this%index_l2e_filter_soilc     = index
+
+    id                                   = L2E_FILTER_NUM_SOILC
     call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
-    this%index_l2e_col_active              = index
-    
-    id                                             = L2E_LANDUNIT_TYPE
-    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
-    this%index_l2e_lunit_type              = index
-    
+    this%index_l2e_filter_num_soilc = index
+
     ! Liquid water
     id                                   = L2E_STATE_H2OSOI_LIQ_NLEVGRND
     call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
@@ -375,11 +354,10 @@ contains
     
     
     ! Local variables
-    integer  , pointer                   :: col_active(:)
-    integer  , pointer                   :: col_landunit(:)
-    integer  , pointer                   :: lun_type(:)
-    integer                              :: c,j,l,ii,jj
+    integer                              :: c,fc,j,l,ii,jj
     real(r8) , pointer                   :: porosity(:,:),temperature(:,:)
+    integer   , pointer                  :: filter_soilc(:)
+    integer                              :: num_soilc
     
     character(len=kAlquimiaMaxStringLength) :: alq_poolname
     type (c_ptr), pointer :: name_list(:)
@@ -398,12 +376,10 @@ contains
     type(AlquimiaEngineFunctionality) :: chem_engine_functionality
 
     
-    print *, 'Entering Alquimia setup'
+    write(iulog,*), 'Entering Alquimia setup'
     
-    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_col_active          , col_active   )
-    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_lunit_index  , col_landunit )
-    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_lunit_type       , lun_type     )
-    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_lunit_type       , lun_type     )
+    call l2e_init_list%GetPointerToInt1D(this%index_l2e_init_filter_soilc          , filter_soilc   )
+    call l2e_init_list%GetIntValue(this%index_l2e_init_filter_num_soilc          , num_soilc   )
     call l2e_init_list%GetPointerToReal2D(this%index_l2e_init_state_watsatc       , porosity     )
     call l2e_init_list%GetPointerToReal2D(this%index_l2e_init_state_temperature_soil , temperature     )
     
@@ -434,7 +410,7 @@ contains
       call endrun(msg='Alquimia error: '//status_message)
     endif
     
-    write(iulog,'(a,L1)') 'Alquimia hands off mode should be ',hands_off
+    ! write(iulog,'(a,L1)') 'Alquimia hands off mode should be ',hands_off
     call PrintSizes(this%chem_sizes)
     
     ! Allocate memory for chemistry data
@@ -451,7 +427,7 @@ contains
     ! Map out the location of pertinent pools in Alquimia data structure
     ! Assumes that organic matter pools in PFLOTRAN are named the same as decomp_pool_name_history
     ! Currently we are not mapping any non-CTC pools. Need to add another data structure for other chemicals if we want to save them in ELM restart/history or use in other ways
-    print *,'Alquimia carbon pool mapping:'
+    write(iulog,*),'Alquimia carbon pool mapping:'
     allocate(this%carbon_pool_mapping(ndecomp_pools))
     call c_f_pointer(this%chem_metadata%primary_names%data, name_list, (/this%chem_sizes%num_primary/))
     do ii=1, ndecomp_pools
@@ -464,7 +440,7 @@ contains
       if(pool_num>0) then 
         print '(a, i3, 1X,a7, a, i3, 1X, a)','ELM pool',ii,trim(decomp_cascade_con%decomp_pool_name_history(ii)),' <-> Alquimia pool',pool_num,trim(alq_poolname)
       else
-        print *,'WARNING: No match for pool',ii,trim(decomp_cascade_con%decomp_pool_name_history(ii))
+        write(iulog,*),'WARNING: No match for pool',ii,trim(decomp_cascade_con%decomp_pool_name_history(ii))
       endif
       this%carbon_pool_mapping(ii)=pool_num
     enddo
@@ -478,7 +454,7 @@ contains
     this%CO2_pool_number = pool_num
     
     
-    print *,'Alquimia nitrogen pool mapping:'
+    write(iulog,*),'Alquimia nitrogen pool mapping:'
     allocate(this%nitrogen_pool_mapping(ndecomp_pools))
     do ii=1, ndecomp_pools
       alq_poolname = trim(decomp_cascade_con%decomp_pool_name_history(ii))//'N'
@@ -506,17 +482,17 @@ contains
       print '(a,i3,1X,a)','WARNING: No match for pool',ii,trim(alquimia_NO3_name)
     endif
     this%NO3_pool_number = pool_num
-    ! print *,this%carbon_pool_mapping
-    ! print *,this%nitrogen_pool_mapping
+    ! write(iulog,*),this%carbon_pool_mapping
+    ! write(iulog,*),this%nitrogen_pool_mapping
     
 
     ! Need to map out reactions as well
     allocate(this%pool_reaction_mapping(ndecomp_pools))
     call c_f_pointer(this%chem_metadata%aqueous_kinetic_names%data, name_list, (/this%chem_metadata%aqueous_kinetic_names%size/))
-    print *,'Alquimia reactions:'
+    write(iulog,*),'Alquimia reactions:'
     do ii=1,this%chem_metadata%aqueous_kinetic_names%size
       call c_f_string_ptr(name_list(ii),alq_poolname)
-      print *,trim(alq_poolname)
+      write(iulog,*),trim(alq_poolname)
     enddo
     do ii=1, ndecomp_pools
       if(decomp_cascade_con%cascade_receiver_pool(ii)>0) then
@@ -546,10 +522,9 @@ contains
     
     allocate(this%porosity(nlevdecomp,bounds_clump%begc:bounds_clump%endc))
     
-    do c = bounds_clump%begc, bounds_clump%endc
-      l = col_landunit(c)
-      if ((col_active(c) == 1).and. &
-           (lun_type(l) == istsoil  .or. lun_type(l) == istcrop)) then
+    do fc = 1, num_soilc
+      c = filter_soilc(fc)
+
         do j = 1, nlevdecomp    ! Should be changed when we start doing a whole column at once
             call AllocateAlquimiaState(this%chem_sizes, this%chem_state(j,c))
             call AllocateAlquimiaProperties(this%chem_sizes, this%chem_properties(j,c))
@@ -557,7 +532,7 @@ contains
             call AllocateAlquimiaAuxiliaryOutputData(this%chem_sizes, this%chem_aux_output(j,c))
             
             ! Initialize the state for the cell
-            this%chem_properties(j,c)%volume = 1.0 ! l2e_volume(j,c)
+            this%chem_properties(j,c)%volume = 1.0 ! l2e_volume(j,c) ! Todo: set based on soil thickness
             this%chem_properties(j,c)%saturation = 1.0 ! l2e_saturation(j,c)
             this%chem_state(j,c)%water_density = 999.9720
             this%porosity(j,c) = porosity(j,c)
@@ -574,7 +549,6 @@ contains
             
             
         enddo
-      endif
     enddo
     ! call PrintState(this%chem_state(1,1))
     
@@ -633,10 +607,9 @@ contains
     
     
     ! Local variables
-    integer                              :: c,j,l,poolnum
-    integer  , pointer                   :: col_active(:)
-    integer  , pointer                   :: col_landunit(:)
-    integer  , pointer                   :: lun_type(:)
+    integer                              :: c,fc,j,l,poolnum
+    integer   , pointer                  :: filter_soilc(:)
+    integer                              :: num_soilc
     integer                              :: max_cuts
     real(r8) , pointer, dimension(:,:,:)    :: soilcarbon_l2e,soilcarbon_e2l 
     real(r8) , pointer, dimension(:,:,:)    :: soilnitrogen_l2e,soilnitrogen_e2l 
@@ -655,9 +628,8 @@ contains
     ! Pass data from ELM
     
     ! Column filters
-    call l2e_list%GetPointerToInt1D(this%index_l2e_col_active          , col_active   )
-    call l2e_list%GetPointerToInt1D(this%index_l2e_lunit_index  , col_landunit )
-    call l2e_list%GetPointerToInt1D(this%index_l2e_lunit_type       , lun_type     )
+    call l2e_list%GetPointerToInt1D(this%index_l2e_filter_soilc , filter_soilc   )
+    call l2e_list%GetIntValue(this%index_l2e_filter_num_soilc          , num_soilc   )
     
     ! C and N pools
     call l2e_list%GetPointerToReal3D(this%index_l2e_state_decomp_cpools , soilcarbon_l2e)
@@ -685,10 +657,8 @@ contains
     
      ! Run the reactions engine for a step. Alquimia works on one cell at a time
      ! TODO: Transport needs to be integrated somehow. 
-     do c = bounds_clump%begc, bounds_clump%endc
-       l = col_landunit(c)
-       if ((col_active(c) == 1).and. &
-            (lun_type(l) == istsoil  .or. lun_type(l) == istcrop)) then
+    do fc = 1, num_soilc
+      c = filter_soilc(fc)
          do j = 1, nlevdecomp  
              ! Run the reactions one time step
              this%chem_state(j,c)%water_density = 999.9720
@@ -730,7 +700,7 @@ contains
              if(this%NH4_pool_number>0) alquimia_data(this%NH4_pool_number) = nh4_l2e(c,j)/natomw*1000.0/this%chem_state(j,c)%porosity
 
               call run_onestep(this, j,c, dt,0,max_cuts)
-              ! print *,"Converged after",max_cuts,"cuts"
+              ! write(iulog,*),"Converged after",max_cuts,"cuts"
                                  
                                  
               ! Set updated land model values
@@ -755,7 +725,6 @@ contains
               if(this%NH4_pool_number>0) nh4_e2l(c,j) = alquimia_data(this%NH4_pool_number)*natomw/(1000.0/this%chem_state(j,c)%porosity)
               
          enddo
-       endif
      enddo
      
 
@@ -839,7 +808,7 @@ contains
                                            this%chem_aux_data(j,c), this%chem_status)
     ! Reset porosity because Pflotran tends to mess it up
     this%chem_state(j,c)%porosity=porosity
-    ! print *,'Converged =',this%chem_status%converged,"ncuts =",num_cuts
+    ! write(iulog,*),'Converged =',this%chem_status%converged,"ncuts =",num_cuts
     if (this%chem_status%converged) then
       ! Success. Can get aux output and finish execution of the subroutine
       ! Get auxiliary output
@@ -860,17 +829,17 @@ contains
         ! Need to run the step two times because we have cut the timestep in half
         call run_onestep(this, j,c, dt,num_cuts+1,ncuts)
         if(ncuts>max_cuts) max_cuts=ncuts
-        ! print *,'Converged =',this%chem_status%converged,"ncuts =",ncuts,'(Substep 1)'
+        ! write(iulog,*),'Converged =',this%chem_status%converged,"ncuts =",ncuts,'(Substep 1)'
         
         ! The second one starts from the maximum number of cuts from the first one so it doesn't waste time retrying a bunch of failed timestep lengths
          do ii=1,2**(max_cuts-(num_cuts+1))
            call run_onestep(this, j,c, dt,ncuts,ncuts2)
            if(ncuts2>max_cuts) max_cuts=ncuts2
-        !   print *,'Converged =',this%chem_status%converged,"ncuts =",ncuts2,'. Substep 2 +',ii
+        !   write(iulog,*),'Converged =',this%chem_status%converged,"ncuts =",ncuts2,'. Substep 2 +',ii
          enddo
         ! call run_onestep(this, j,c, dt,num_cuts+1,ncuts)
         ! if(ncuts>max_cuts) max_cuts=ncuts
-        ! print *,'Converged =',this%chem_status%converged,"ncuts =",ncuts,'(Substep 2)'
+        ! write(iulog,*),'Converged =',this%chem_status%converged,"ncuts =",ncuts,'(Substep 2)'
       endif
     endif
       
