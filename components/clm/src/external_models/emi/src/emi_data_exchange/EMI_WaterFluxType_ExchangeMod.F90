@@ -8,11 +8,12 @@ module EMI_WaterFluxType_ExchangeMod
   use EMI_DataDimensionMod                  , only : emi_data_dimension_list_type
   use WaterFluxType        , only : waterflux_type
   use EMI_Atm2LndType_Constants
-  use EMI_CanopyStateType_Constants
-  use EMI_ChemStateType_Constants
+  use EMI_CNCarbonFluxType_Constants
   use EMI_CNCarbonStateType_Constants
   use EMI_CNNitrogenStateType_Constants
-  use EMI_CNCarbonFluxType_Constants
+  use EMI_CanopyStateType_Constants
+  use EMI_ChemStateType_Constants
+  use EMI_ColumnDataType_Constants
   use EMI_EnergyFluxType_Constants
   use EMI_SoilHydrologyType_Constants
   use EMI_SoilStateType_Constants
@@ -59,28 +60,28 @@ contains
     integer                             :: count
 
     associate(& 
-         mflx_infl            => waterflux_vars%mflx_infl_col            , &
-         mflx_et              => waterflux_vars%mflx_et_col              , &
-         mflx_dew             => waterflux_vars%mflx_dew_col             , &
-         mflx_sub_snow        => waterflux_vars%mflx_sub_snow_col        , &
-         mflx_snowlyr_disp    => waterflux_vars%mflx_snowlyr_disp_col    , &
-         mflx_snowlyr         => waterflux_vars%mflx_snowlyr_col         , &
-         mflx_drain           => waterflux_vars%mflx_drain_col           , &
-         qflx_infl            => waterflux_vars%qflx_infl_col            , &
-         qflx_totdrain        => waterflux_vars%qflx_totdrain_col        , &
-         qflx_gross_evap_soil => waterflux_vars%qflx_gross_evap_soil_col , &
-         qflx_gross_infl_soil => waterflux_vars%qflx_gross_infl_soil_col , &
-         qflx_surf            => waterflux_vars%qflx_surf_col            , &
-         qflx_dew_grnd        => waterflux_vars%qflx_dew_grnd_col        , &
-         qflx_dew_snow        => waterflux_vars%qflx_dew_snow_col        , &
-         qflx_h2osfc2topsoi   => waterflux_vars%qflx_h2osfc2topsoi_col   , &
-         qflx_sub_snow        => waterflux_vars%qflx_sub_snow_col        , &
-         qflx_snow2topsoi     => waterflux_vars%qflx_snow2topsoi_col     , &
-         qflx_rootsoi         => waterflux_vars%qflx_rootsoi_col         , &
-         qflx_adv             => waterflux_vars%qflx_adv_col             , &
-         qflx_drain_vr        => waterflux_vars%qflx_drain_vr_col        , &
-         qflx_tran_veg        => waterflux_vars%qflx_tran_veg_col        , &
-         qflx_rootsoi_frac  => waterflux_vars%qflx_rootsoi_frac_patch    &
+         mflx_infl_col            => waterflux_vars%mflx_infl_col            , &
+         mflx_et_col              => waterflux_vars%mflx_et_col              , &
+         mflx_dew_col             => waterflux_vars%mflx_dew_col             , &
+         mflx_sub_snow_col        => waterflux_vars%mflx_sub_snow_col        , &
+         mflx_snowlyr_disp_col    => waterflux_vars%mflx_snowlyr_disp_col    , &
+         mflx_snowlyr_col         => waterflux_vars%mflx_snowlyr_col         , &
+         mflx_drain_col           => waterflux_vars%mflx_drain_col           , &
+         qflx_infl_col            => waterflux_vars%qflx_infl_col            , &
+         qflx_totdrain_col        => waterflux_vars%qflx_totdrain_col        , &
+         qflx_gross_evap_soil_col => waterflux_vars%qflx_gross_evap_soil_col , &
+         qflx_gross_infl_soil_col => waterflux_vars%qflx_gross_infl_soil_col , &
+         qflx_surf_col            => waterflux_vars%qflx_surf_col            , &
+         qflx_dew_grnd_col        => waterflux_vars%qflx_dew_grnd_col        , &
+         qflx_dew_snow_col        => waterflux_vars%qflx_dew_snow_col        , &
+         qflx_h2osfc2topsoi_col   => waterflux_vars%qflx_h2osfc2topsoi_col   , &
+         qflx_sub_snow_col        => waterflux_vars%qflx_sub_snow_col        , &
+         qflx_snow2topsoi_col     => waterflux_vars%qflx_snow2topsoi_col     , &
+         qflx_rootsoi_col         => waterflux_vars%qflx_rootsoi_col         , &
+         qflx_adv_col             => waterflux_vars%qflx_adv_col             , &
+         qflx_drain_vr_col        => waterflux_vars%qflx_drain_vr_col        , &
+         qflx_tran_veg_col        => waterflux_vars%qflx_tran_veg_col        , &
+         qflx_rootsoi_frac_patch  => waterflux_vars%qflx_rootsoi_frac_patch    &
          )
 
     count = 0
@@ -104,7 +105,7 @@ contains
           case (L2E_FLUX_INFIL_MASS_FLUX)
              do fc = 1, num_filter
                 c = filter(fc)
-                cur_data%data_real_1d(c) = mflx_infl(c)
+                cur_data%data_real_1d(c) = mflx_infl_col(c)
              enddo
              cur_data%is_set = .true.
 
@@ -112,7 +113,7 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevgrnd
-                   cur_data%data_real_2d(c,j) = mflx_et(c,j)
+                   cur_data%data_real_2d(c,j) = mflx_et_col(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -120,28 +121,28 @@ contains
           case (L2E_FLUX_DEW_MASS_FLUX)
              do fc = 1, num_filter
                 c = filter(fc)
-                cur_data%data_real_1d(c) = mflx_dew(c)
+                cur_data%data_real_1d(c) = mflx_dew_col(c)
              enddo
              cur_data%is_set = .true.
 
           case (L2E_FLUX_SNOW_SUBLIMATION_MASS_FLUX)
              do fc = 1, num_filter
                 c = filter(fc)
-                cur_data%data_real_1d(c) = mflx_sub_snow(c)
+                cur_data%data_real_1d(c) = mflx_sub_snow_col(c)
              enddo
              cur_data%is_set = .true.
 
           case (L2E_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX)
              do fc = 1, num_filter
                 c = filter(fc)
-                cur_data%data_real_1d(c) = mflx_snowlyr_disp(c)
+                cur_data%data_real_1d(c) = mflx_snowlyr_disp_col(c)
              enddo
              cur_data%is_set = .true.
 
           case (L2E_FLUX_RESTART_SNOW_LYR_DISAPPERANCE_MASS_FLUX)
              do fc = 1, num_filter
                 c = filter(fc)
-                cur_data%data_real_1d(c) = mflx_snowlyr(c)
+                cur_data%data_real_1d(c) = mflx_snowlyr_col(c)
              enddo
              cur_data%is_set = .true.
 
@@ -149,7 +150,7 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevgrnd
-                   cur_data%data_real_2d(c,j) = mflx_drain(c,j)
+                   cur_data%data_real_2d(c,j) = mflx_drain_col(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -157,77 +158,77 @@ contains
           case (L2E_FLUX_INFL)
              do fc = 1, num_filter
                 c = filter(fc)
-                cur_data%data_real_1d(c) = qflx_infl(c)
+                cur_data%data_real_1d(c) = qflx_infl_col(c)
              enddo
              cur_data%is_set = .true.
 
           case (L2E_FLUX_TOTDRAIN)
              do fc = 1, num_filter
                 c = filter(fc)
-                cur_data%data_real_1d(c) = qflx_totdrain(c)
+                cur_data%data_real_1d(c) = qflx_totdrain_col(c)
              enddo
              cur_data%is_set = .true.
 
           case (L2E_FLUX_GROSS_EVAP_SOIL)
              do fc = 1, num_filter
                 c = filter(fc)
-                cur_data%data_real_1d(c) = qflx_gross_evap_soil(c)
+                cur_data%data_real_1d(c) = qflx_gross_evap_soil_col(c)
              enddo
              cur_data%is_set = .true.
 
           case (L2E_FLUX_GROSS_INFL_SOIL)
              do fc = 1, num_filter
                 c = filter(fc)
-                cur_data%data_real_1d(c) = qflx_gross_infl_soil(c)
+                cur_data%data_real_1d(c) = qflx_gross_infl_soil_col(c)
              enddo
              cur_data%is_set = .true.
 
           case (L2E_FLUX_SURF)
              do fc = 1, num_filter
                 c = filter(fc)
-                cur_data%data_real_1d(c) = qflx_surf(c)
+                cur_data%data_real_1d(c) = qflx_surf_col(c)
              enddo
              cur_data%is_set = .true.
 
           case (L2E_FLUX_DEW_GRND)
              do fc = 1, num_filter
                 c = filter(fc)
-                cur_data%data_real_1d(c) = qflx_dew_grnd(c)
+                cur_data%data_real_1d(c) = qflx_dew_grnd_col(c)
              enddo
              cur_data%is_set = .true.
 
           case (L2E_FLUX_DEW_SNOW)
              do fc = 1, num_filter
                 c = filter(fc)
-                cur_data%data_real_1d(c) = qflx_dew_snow(c)
+                cur_data%data_real_1d(c) = qflx_dew_snow_col(c)
              enddo
              cur_data%is_set = .true.
 
           case (L2E_FLUX_SUB_SNOW_VOL)
              do fc = 1, num_filter
                 c = filter(fc)
-                cur_data%data_real_1d(c) = qflx_h2osfc2topsoi(c)
+                cur_data%data_real_1d(c) = qflx_h2osfc2topsoi_col(c)
              enddo
              cur_data%is_set = .true.
 
           case (L2E_FLUX_SUB_SNOW)
              do fc = 1, num_filter
                 c = filter(fc)
-                cur_data%data_real_1d(c) = qflx_sub_snow(c)
+                cur_data%data_real_1d(c) = qflx_sub_snow_col(c)
              enddo
              cur_data%is_set = .true.
 
           case (L2E_FLUX_H2OSFC2TOPSOI)
              do fc = 1, num_filter
                 c = filter(fc)
-                cur_data%data_real_1d(c) = qflx_h2osfc2topsoi(c)
+                cur_data%data_real_1d(c) = qflx_h2osfc2topsoi_col(c)
              enddo
              cur_data%is_set = .true.
 
           case (L2E_FLUX_SNOW2TOPSOI)
              do fc = 1, num_filter
                 c = filter(fc)
-                cur_data%data_real_1d(c) = qflx_snow2topsoi(c)
+                cur_data%data_real_1d(c) = qflx_snow2topsoi_col(c)
              enddo
              cur_data%is_set = .true.
 
@@ -235,7 +236,7 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevgrnd
-                   cur_data%data_real_2d(c,j) = qflx_rootsoi(c,j)
+                   cur_data%data_real_2d(c,j) = qflx_rootsoi_col(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -244,7 +245,7 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 0, nlevgrnd
-                   cur_data%data_real_2d(c,j) = qflx_adv(c,j)
+                   cur_data%data_real_2d(c,j) = qflx_adv_col(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -253,7 +254,7 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevgrnd
-                   cur_data%data_real_2d(c,j) = qflx_drain_vr(c,j)
+                   cur_data%data_real_2d(c,j) = qflx_drain_vr_col(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -261,7 +262,7 @@ contains
           case (L2E_FLUX_TRAN_VEG)
              do fc = 1, num_filter
                 c = filter(fc)
-                cur_data%data_real_1d(c) = qflx_tran_veg(c)
+                cur_data%data_real_1d(c) = qflx_tran_veg_col(c)
              enddo
              cur_data%is_set = .true.
 
@@ -269,7 +270,7 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevsoi
-                   cur_data%data_real_2d(c,j) = qflx_rootsoi_frac(c,j)
+                   cur_data%data_real_2d(c,j) = qflx_rootsoi_frac_patch(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -311,7 +312,7 @@ contains
     integer                             :: count
 
     associate(& 
-         mflx_snowlyr => waterflux_vars%mflx_snowlyr_col   &
+         mflx_snowlyr_col => waterflux_vars%mflx_snowlyr_col   &
          )
 
     count = 0
@@ -335,7 +336,7 @@ contains
           case (E2L_FLUX_SNOW_LYR_DISAPPERANCE_MASS_FLUX)
              do fc = 1, num_filter
                 c = filter(fc)
-                mflx_snowlyr(c) = cur_data%data_real_1d(c)
+                mflx_snowlyr_col(c) = cur_data%data_real_1d(c)
              enddo
              cur_data%is_set = .true.
 

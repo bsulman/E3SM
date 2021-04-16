@@ -5,6 +5,7 @@ set(EMI_EMI_DATA_DEFINITION_SOURCES
   EMI_CNCarbonStateType_DataMod.F90
   EMI_CNNitrogenStateType_DataMod.F90
   EMI_CNCarbonFluxType_DataMod.F90
+  EMI_ColumnEnergyStateType_DataMod.F90
   EMI_EnergyFluxType_DataMod.F90
   EMI_SoilHydrologyType_DataMod.F90
   EMI_SoilStateType_DataMod.F90

@@ -8,11 +8,12 @@ module EMI_ChemStateType_ExchangeMod
   use EMI_DataDimensionMod                  , only : emi_data_dimension_list_type
   use ChemStateType        , only : chemstate_type
   use EMI_Atm2LndType_Constants
-  use EMI_CanopyStateType_Constants
-  use EMI_ChemStateType_Constants
+  use EMI_CNCarbonFluxType_Constants
   use EMI_CNCarbonStateType_Constants
   use EMI_CNNitrogenStateType_Constants
-  use EMI_CNCarbonFluxType_Constants
+  use EMI_CanopyStateType_Constants
+  use EMI_ChemStateType_Constants
+  use EMI_ColumnDataType_Constants
   use EMI_EnergyFluxType_Constants
   use EMI_SoilHydrologyType_Constants
   use EMI_SoilStateType_Constants
@@ -57,7 +58,7 @@ contains
     integer                             :: count
 
     associate(& 
-         soil => chemstate_vars%soil_ph   &
+         soil_ph => chemstate_vars%soil_ph   &
          )
 
     count = 0
@@ -82,7 +83,7 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevsoi
-                   cur_data%data_real_2d(c,j) = soil(c,j)
+                   cur_data%data_real_2d(c,j) = soil_ph(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.

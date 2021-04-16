@@ -17,19 +17,21 @@ module ExternalModelAlquimiaMod
   use EMI_Landunit_Constants
   use EMI_SoilHydrologyType_Constants
   use EMI_SoilStateType_Constants
-  use EMI_TemperatureType_Constants
+  use EMI_ColumnDataType_Constants
   use EMI_WaterFluxType_Constants
   use EMI_WaterStateType_Constants
   use EMI_CNCarbonStateType_Constants
   use EMI_CNNitrogenStateType_Constants
   use EMI_CNCarbonFluxType_Constants
 
+#ifdef USE_ALQUIMIA_LIB
    use AlquimiaContainers_module, only : AlquimiaSizes,AlquimiaProblemMetaData,AlquimiaProperties,&
             AlquimiaState,AlquimiaAuxiliaryData,AlquimiaAuxiliaryOutputData, AlquimiaEngineStatus, &
             AlquimiaEngineFunctionality,AlquimiaGeochemicalCondition
             
    use alquimia_fortran_interface_mod, only : AlquimiaFortranInterface
    use iso_c_binding, only : c_ptr
+#endif
 
   implicit none
 
@@ -66,6 +68,7 @@ module ExternalModelAlquimiaMod
     integer :: index_e2l_state_nh4
     integer :: index_e2l_state_no3
     
+#ifdef USE_ALQUIMIA_LIB
     ! Chemistry engine: Should be one per thread
     type(AlquimiaFortranInterface)       :: chem
     type(AlquimiaEngineStatus)    :: chem_status
@@ -84,6 +87,8 @@ module ExternalModelAlquimiaMod
     ! Initial condition
     type(AlquimiaGeochemicalCondition) :: chem_ic
     
+#endif
+
     ! State variables
     real(r8), pointer, dimension(:,:)    :: water_density, porosity, temperature, aqueous_pressure
     
@@ -156,7 +161,7 @@ contains
     call l2e_init_list%AddDataByID(id, number_em_stages, em_stages, index)
     this%index_l2e_init_state_watsatc              = index
     
-    id                                             = L2E_STATE_TSOIL_NLEVSOI
+    id                                             = L2E_STATE_TSOIL_NLEVSOI_COL
     call l2e_init_list%AddDataByID(id, number_em_stages, em_stages, index)
     this%index_l2e_init_state_temperature_soil              = index
     
@@ -250,7 +255,7 @@ contains
     this%index_l2e_state_decomp_npools              = index
 
     ! Soil temperature
-    id                                             = L2E_STATE_TSOIL_NLEVSOI
+    id                                             = L2E_STATE_TSOIL_NLEVSOI_COL
     call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
     this%index_l2e_state_temperature_soil              = index
     
@@ -337,6 +342,7 @@ contains
     ! Initialize an emi_list for exchanging data from land model to external
     ! model during time integration stage
     !
+#ifdef USE_ALQUIMIA_LIB
     use alquimia_fortran_interface_mod, only : AllocateAlquimiaEngineStatus, &
                                             AllocateAlquimiaProblemMetaData,&
                                             AllocateAlquimiaState,&
@@ -577,33 +583,20 @@ contains
     
     ! Here, any chemistry info (CEC, ion exchange, etc to chem_state and isotherm kd, langmuir, etc would be copied to chem_properties)
 
-  end subroutine EMAlquimia_Init
-  
-  integer function find_alquimia_pool(pool_name,name_list,n_names) result(pool_number)
-    use AlquimiaContainers_module, only : kAlquimiaMaxStringLength
-    use c_f_interface_module, only : c_f_string_ptr
+#else
+  implicit none
+  !
+  ! !ARGUMENTS
+  class(em_Alquimia_type)                  :: this
+  class(emi_data_list) , intent(in)    :: l2e_init_list
+  class(emi_data_list) , intent(inout) :: e2l_init_list
+  integer              , intent(in)    :: iam
+  type(bounds_type)    , intent (in)   :: bounds_clump
 
-    implicit none
-    
-    character(*),intent(in) :: pool_name
-    type (c_ptr), pointer,intent(in) :: name_list(:)
-    integer, intent(in) :: n_names
-    
-    integer :: jj
-    character(len=kAlquimiaMaxStringLength) :: alq_poolname
-    
-    
-    pool_number=-1
-    
-    do jj=1, n_names
-      call c_f_string_ptr(name_list(jj),alq_poolname)
-      if(trim(alq_poolname) == trim(pool_name)) then
-        pool_number=jj
-        exit
-      endif
-    enddo
-    
-  end function find_alquimia_pool
+  call endrun(msg='ERROR: Attempting to run with alquimia when model not compiled with USE_ALQUIMIA_LIB')
+#endif
+
+  end subroutine EMAlquimia_Init
 
   !------------------------------------------------------------------------
   subroutine EMAlquimia_Solve(this, em_stage, dt, nstep, clump_rank, l2e_list, e2l_list, &
@@ -613,6 +606,8 @@ contains
     ! Initialze an emi_list for exchanging data from land model to external
     ! model during time integration stage
     !
+#ifdef USE_ALQUIMIA_LIB
+
     use clm_varpar, only : nlevdecomp,ndecomp_pools
     use landunit_varcon, only : istcrop,istsoil
     use clm_varcon, only : catomw,natomw
@@ -767,8 +762,52 @@ contains
      ! Alquimia here calls GetAuxiliaryOutput which copies data back to interface arrays. We should do that here for EMI arrays
      ! Again, need to convert units back to ELM style, keeping track of what kind of species we are using so units are correct
 
+#else
+  implicit none
+  !
+  ! !ARGUMENTS
+  class(em_alquimia_type)              :: this
+  integer              , intent(in)    :: em_stage
+  real(r8)             , intent(in)    :: dt ! s
+  integer              , intent(in)    :: nstep
+  integer              , intent(in)    :: clump_rank
+  class(emi_data_list) , intent(in)    :: l2e_list
+  class(emi_data_list) , intent(inout) :: e2l_list
+  type(bounds_type)    , intent (in)   :: bounds_clump
+  
+  call endrun(msg='ERROR: Attempting to run with alquimia when model not compiled with USE_ALQUIMIA_LIB')
+#endif
+
   end subroutine EMAlquimia_Solve
   
+  
+#ifdef USE_ALQUIMIA_LIB
+
+  integer function find_alquimia_pool(pool_name,name_list,n_names) result(pool_number)
+    use AlquimiaContainers_module, only : kAlquimiaMaxStringLength
+    use c_f_interface_module, only : c_f_string_ptr
+
+    implicit none
+    
+    character(*),intent(in) :: pool_name
+    type (c_ptr), pointer,intent(in) :: name_list(:)
+    integer, intent(in) :: n_names
+    
+    integer :: jj
+    character(len=kAlquimiaMaxStringLength) :: alq_poolname
+    
+    
+    pool_number=-1
+    
+    do jj=1, n_names
+      call c_f_string_ptr(name_list(jj),alq_poolname)
+      if(trim(alq_poolname) == trim(pool_name)) then
+        pool_number=jj
+        exit
+      endif
+    enddo
+    
+  end function find_alquimia_pool
 
   
   recursive subroutine run_onestep(this,j,c,dt,num_cuts,max_cuts)
@@ -839,5 +878,6 @@ contains
 
   end subroutine run_onestep
   
+#endif
 
 end module ExternalModelAlquimiaMod

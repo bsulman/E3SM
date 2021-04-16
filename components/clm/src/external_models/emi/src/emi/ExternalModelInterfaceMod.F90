@@ -38,6 +38,8 @@ module ExternalModelInterfaceMod
   use EMI_CNCarbonStateType_ExchangeMod
   use EMI_CNCarbonFluxType_ExchangeMod
   use EMI_CNNitrogenStateType_ExchangeMod
+  use EMI_ColumnEnergyStateType_ExchangeMod, only : EMI_Pack_ColumnEnergyStateType_at_Column_Level_for_EM
+  use EMI_ColumnEnergyStateType_ExchangeMod, only : EMI_Unpack_ColumnEnergyStateType_at_Column_Level_from_EM
   !
   implicit none
   !
@@ -208,6 +210,7 @@ contains
     use clm_instMod           , only : waterflux_vars
     use clm_instMod           , only : waterstate_vars
     use clm_instMod           , only : temperature_vars
+    use ColumnDataType        , only : col_es
 #else
     use clm_instMod           , only : soilstate_inst
     use clm_instMod           , only : soilhydrology_inst
@@ -370,8 +373,8 @@ contains
                  num_filter_col, filter_col)
             call EMI_Pack_Landunit_for_EM(l2e_init_list(clump_rank), em_stage, &
                  num_filter_lun, filter_lun)
-           call EMI_Pack_TemperatureType_at_Column_Level_for_EM(l2e_init_list(clump_rank), em_stage, &
-                num_filter_col, filter_col, temperature_vars)
+            call EMI_Pack_ColumnEnergyStateType_at_Column_Level_for_EM(l2e_init_list(clump_rank), em_stage, &
+                  num_filter_col, filter_col, col_es)
 
 
            ! Ensure all data needed by external model is packed
@@ -818,7 +821,8 @@ contains
        num_filter_lun, filter_lun,                            &
        soilhydrology_vars, soilstate_vars, waterflux_vars,    &
        waterstate_vars, temperature_vars,  atm2lnd_vars,      &
-       canopystate_vars, energyflux_vars, carbonstate_vars, carbonflux_vars, nitrogenstate_vars)
+       canopystate_vars, energyflux_vars, carbonstate_vars,   &
+       carbonflux_vars, nitrogenstate_vars, col_es)
     !
     ! !DESCRIPTION:
     !
@@ -841,6 +845,7 @@ contains
     use CNCarbonStateType      , only : carbonstate_type
     use CNCarbonFluxType       , only : carbonflux_type
     use CNNitrogenStateType      , only : nitrogenstate_type
+    use ColumnDataType         , only : column_energy_state
     use ExternalModelBETRMod   , only : EM_BETR_Solve
     use decompMod              , only : get_clump_bounds
     !
@@ -869,6 +874,7 @@ contains
     type(energyflux_type)    , optional , intent(inout) :: energyflux_vars
     type(carbonstate_type)   , optional , intent(inout) :: carbonstate_vars
     type(carbonflux_type)   , optional , intent(inout) :: carbonflux_vars
+    type(column_energy_state)  , optional , intent(inout) :: col_es
     type(nitrogenstate_type)   , optional , intent(inout) :: nitrogenstate_vars
     !
     integer          :: index_em
@@ -931,6 +937,20 @@ contains
        call EMI_Pack_TemperatureType_at_Column_Level_for_EM(l2e_driver_list(iem), em_stage, &
             num_nolakec_and_nourbanc, filter_nolakec_and_nourbanc, temperature_vars)
     endif
+
+    if ( present(col_es) .and. &
+         present(num_hydrologyc)   .and. &
+         present(filter_hydrologyc)) then
+
+      call EMI_Pack_ColumnEnergyStateType_at_Column_Level_for_EM(l2e_driver_list(iem), em_stage, &
+            num_hydrologyc, filter_hydrologyc, col_es)
+
+      elseif (present(num_nolakec_and_nourbanc)  .and. &
+               present(filter_nolakec_and_nourbanc)) then
+
+      call EMI_Pack_ColumnEnergyStateType_at_Column_Level_for_EM(l2e_driver_list(iem), em_stage, &
+            num_nolakec_and_nourbanc, filter_nolakec_and_nourbanc, col_es)
+   endif
 
     if ( present(waterstate_vars)) then
        if (present(num_hydrologyc)  .and. &
@@ -1186,6 +1206,14 @@ contains
        call EMI_Unpack_TemperatureType_at_Column_Level_from_EM(e2l_driver_list(iem), em_stage, &
             num_nolakec_and_nourbanc, filter_nolakec_and_nourbanc, temperature_vars)
     endif
+
+    if ( present(col_es) .and. &
+         present(num_nolakec_and_nourbanc)     .and. &
+         present(filter_nolakec_and_nourbanc)) then
+
+      call EMI_Unpack_ColumnEnergyStateType_at_Column_Level_from_EM(e2l_driver_list(iem), em_stage, &
+            num_nolakec_and_nourbanc, filter_nolakec_and_nourbanc, col_es)
+   endif
 
     if (present(carbonstate_vars)  .and. &
          present(num_hydrologyc)   .and. &

@@ -411,7 +411,7 @@ module clm_varctl
   ! Alquimia external model
   !----------------------------------------------------------
   logical, public           :: use_alquimia         = .false.
-  character(len=32), public :: alquimia_inputfile   = 'alquimia_io/pflotran.in'
+  character(len=256), public :: alquimia_inputfile   = 'alquimia_io/pflotran.in'
   character(len=32), public :: alquimia_engine_name = 'pflotran'
   character(len=32), public :: alquimia_IC_name     = 'initial' ! Initial condition
   character(len=32), public :: alquimia_CO2_name    = 'CO2(aq)' ! Name of CO2 in reaction network

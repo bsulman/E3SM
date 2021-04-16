@@ -8,11 +8,12 @@ module EMI_CNCarbonStateType_ExchangeMod
   use EMI_DataDimensionMod                  , only : emi_data_dimension_list_type
   use CNCarbonStateType    , only : carbonstate_type
   use EMI_Atm2LndType_Constants
-  use EMI_CanopyStateType_Constants
-  use EMI_ChemStateType_Constants
+  use EMI_CNCarbonFluxType_Constants
   use EMI_CNCarbonStateType_Constants
   use EMI_CNNitrogenStateType_Constants
-  use EMI_CNCarbonFluxType_Constants
+  use EMI_CanopyStateType_Constants
+  use EMI_ChemStateType_Constants
+  use EMI_ColumnDataType_Constants
   use EMI_EnergyFluxType_Constants
   use EMI_SoilHydrologyType_Constants
   use EMI_SoilStateType_Constants
@@ -59,7 +60,7 @@ contains
     integer                             :: count
 
     associate(& 
-         decomp_cpools_vr => carbonstate_vars%decomp_cpools_vr_col   &
+         decomp_cpools_vr_col => carbonstate_vars%decomp_cpools_vr_col   &
          )
 
     count = 0
@@ -85,7 +86,7 @@ contains
                 c = filter(fc)
                 do j = 1, nlevdecomp_full
                    do k = 1, ndecomp_pools
-                      cur_data%data_real_3d(c,j,k) = decomp_cpools_vr(c,j,k)
+                      cur_data%data_real_3d(c,j,k) = decomp_cpools_vr_col(c,j,k)
                    enddo
                 enddo
              enddo
@@ -130,7 +131,7 @@ contains
     integer                             :: count
 
     associate(& 
-         decomp_cpools_vr => carbonstate_vars%decomp_cpools_vr_col   &
+         decomp_cpools_vr_col => carbonstate_vars%decomp_cpools_vr_col   &
          )
 
     count = 0
@@ -156,7 +157,7 @@ contains
                 c = filter(fc)
                 do j = 1, nlevdecomp_full
                    do k = 1, ndecomp_pools
-                      decomp_cpools_vr(c,j,k) = cur_data%data_real_3d(c,j,k)
+                      decomp_cpools_vr_col(c,j,k) = cur_data%data_real_3d(c,j,k)
                    enddo
                 enddo
              enddo

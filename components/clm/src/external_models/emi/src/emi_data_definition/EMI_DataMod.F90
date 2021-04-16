@@ -1273,6 +1273,8 @@ contains
     use EMI_WaterStateType_DataMod
     use EMI_TemperatureType_DataMod
     use EMI_ColumnType_Constants
+    use EMI_ColumnEnergyStateType_Constants
+    use EMI_ColumnEnergyStateType_DataMod
     use EMI_Filter_Constants
     use EMI_Landunit_Constants
     use EMI_CNCarbonStateType_DataMod
@@ -1430,6 +1432,14 @@ contains
             dim3_beg_name, dim3_end_name, dim4_beg_name, dim4_end_name, &
             data_found)
     end if
+
+    if (.not.data_found) then
+      call EMI_ColumnEnergyStateType_DataInfoByID(data_id, id_val, &
+           name_val, long_name_val, units_val, is_int_type, is_real_type, ndim, &
+           dim1_beg_name, dim1_end_name, dim2_beg_name, dim2_end_name, &
+           dim3_beg_name, dim3_end_name, dim4_beg_name, dim4_end_name, &
+           data_found)
+   end if
 
     if (.not.data_found) then
        select case(data_id)

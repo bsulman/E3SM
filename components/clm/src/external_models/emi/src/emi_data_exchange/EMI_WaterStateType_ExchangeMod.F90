@@ -8,11 +8,12 @@ module EMI_WaterStateType_ExchangeMod
   use EMI_DataDimensionMod                  , only : emi_data_dimension_list_type
   use WaterStateType       , only : waterstate_type
   use EMI_Atm2LndType_Constants
-  use EMI_CanopyStateType_Constants
-  use EMI_ChemStateType_Constants
+  use EMI_CNCarbonFluxType_Constants
   use EMI_CNCarbonStateType_Constants
   use EMI_CNNitrogenStateType_Constants
-  use EMI_CNCarbonFluxType_Constants
+  use EMI_CanopyStateType_Constants
+  use EMI_ChemStateType_Constants
+  use EMI_ColumnDataType_Constants
   use EMI_EnergyFluxType_Constants
   use EMI_SoilHydrologyType_Constants
   use EMI_SoilStateType_Constants
@@ -60,21 +61,21 @@ contains
     integer                             :: count
 
     associate(& 
-         h2osoi_liq    => waterstate_vars%h2osoi_liq_col    , &
-         h2osoi_ice    => waterstate_vars%h2osoi_ice_col    , &
-         soilp         => waterstate_vars%soilp_col         , &
-         frac_h2osfc   => waterstate_vars%frac_h2osfc_col   , &
-         finundated    => waterstate_vars%finundated_col    , &
-         h2osoi_liqvol => waterstate_vars%h2osoi_liqvol_col , &
-         h2osoi_icevol => waterstate_vars%h2osoi_icevol_col , &
-         h2osoi_vol    => waterstate_vars%h2osoi_vol_col    , &
-         air_vol       => waterstate_vars%air_vol_col       , &
-         rho_vap       => waterstate_vars%rho_vap_col       , &
-         rhvap_soi     => waterstate_vars%rhvap_soi_col     , &
-         smp_l         => waterstate_vars%smp_l_col         , &
-         h2osno        => waterstate_vars%h2osno_col        , &
-         h2osfc        => waterstate_vars%h2osfc_col        , &
-         frac_sno_eff  => waterstate_vars%frac_sno_eff_col    &
+         h2osoi_liq_col    => waterstate_vars%h2osoi_liq_col    , &
+         h2osoi_ice_col    => waterstate_vars%h2osoi_ice_col    , &
+         soilp_col         => waterstate_vars%soilp_col         , &
+         frac_h2osfc_col   => waterstate_vars%frac_h2osfc_col   , &
+         finundated_col    => waterstate_vars%finundated_col    , &
+         h2osoi_liqvol_col => waterstate_vars%h2osoi_liqvol_col , &
+         h2osoi_icevol_col => waterstate_vars%h2osoi_icevol_col , &
+         h2osoi_vol_col    => waterstate_vars%h2osoi_vol_col    , &
+         air_vol_col       => waterstate_vars%air_vol_col       , &
+         rho_vap_col       => waterstate_vars%rho_vap_col       , &
+         rhvap_soi_col     => waterstate_vars%rhvap_soi_col     , &
+         smp_l_col         => waterstate_vars%smp_l_col         , &
+         h2osno_col        => waterstate_vars%h2osno_col        , &
+         h2osfc_col        => waterstate_vars%h2osfc_col        , &
+         frac_sno_eff_col  => waterstate_vars%frac_sno_eff_col    &
          )
 
     count = 0
@@ -99,7 +100,7 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevgrnd
-                   cur_data%data_real_2d(c,j) = h2osoi_liq(c,j)
+                   cur_data%data_real_2d(c,j) = h2osoi_liq_col(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -108,7 +109,7 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevgrnd
-                   cur_data%data_real_2d(c,j) = h2osoi_ice(c,j)
+                   cur_data%data_real_2d(c,j) = h2osoi_ice_col(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -117,7 +118,7 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevgrnd
-                   cur_data%data_real_2d(c,j) = soilp(c,j)
+                   cur_data%data_real_2d(c,j) = soilp_col(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -125,14 +126,14 @@ contains
           case (L2E_STATE_FRAC_H2OSFC)
              do fc = 1, num_filter
                 c = filter(fc)
-                cur_data%data_real_1d(c) = frac_h2osfc(c)
+                cur_data%data_real_1d(c) = frac_h2osfc_col(c)
              enddo
              cur_data%is_set = .true.
 
           case (L2E_STATE_FRAC_INUNDATED)
              do fc = 1, num_filter
                 c = filter(fc)
-                cur_data%data_real_1d(c) = finundated(c)
+                cur_data%data_real_1d(c) = finundated_col(c)
              enddo
              cur_data%is_set = .true.
 
@@ -140,7 +141,7 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevsoi
-                   cur_data%data_real_2d(c,j) = h2osoi_liqvol(c,j)
+                   cur_data%data_real_2d(c,j) = h2osoi_liqvol_col(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -149,7 +150,7 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevsoi
-                   cur_data%data_real_2d(c,j) = h2osoi_icevol(c,j)
+                   cur_data%data_real_2d(c,j) = h2osoi_icevol_col(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -158,7 +159,7 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevsoi
-                   cur_data%data_real_2d(c,j) = h2osoi_vol(c,j)
+                   cur_data%data_real_2d(c,j) = h2osoi_vol_col(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -167,7 +168,7 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevsoi
-                   cur_data%data_real_2d(c,j) = air_vol(c,j)
+                   cur_data%data_real_2d(c,j) = air_vol_col(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -176,7 +177,7 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevsoi
-                   cur_data%data_real_2d(c,j) = rho_vap(c,j)
+                   cur_data%data_real_2d(c,j) = rho_vap_col(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -185,7 +186,7 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevsoi
-                   cur_data%data_real_2d(c,j) = rhvap_soi(c,j)
+                   cur_data%data_real_2d(c,j) = rhvap_soi_col(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -194,7 +195,7 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevsoi
-                   cur_data%data_real_2d(c,j) = smp_l(c,j)
+                   cur_data%data_real_2d(c,j) = smp_l_col(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -203,7 +204,7 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevsoi
-                   cur_data%data_real_2d(c,j) = h2osoi_liq(c,j)
+                   cur_data%data_real_2d(c,j) = h2osoi_liq_col(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -212,7 +213,7 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevsoi
-                   cur_data%data_real_2d(c,j) = h2osoi_ice(c,j)
+                   cur_data%data_real_2d(c,j) = h2osoi_ice_col(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -221,7 +222,7 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = -nlevsno + 1, 0
-                   cur_data%data_real_2d(c,j) = h2osoi_liq(c,j)
+                   cur_data%data_real_2d(c,j) = h2osoi_liq_col(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -230,7 +231,7 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = -nlevsno + 1, 0
-                   cur_data%data_real_2d(c,j) = h2osoi_ice(c,j)
+                   cur_data%data_real_2d(c,j) = h2osoi_ice_col(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -238,21 +239,21 @@ contains
           case (L2E_STATE_H2OSNOW)
              do fc = 1, num_filter
                 c = filter(fc)
-                cur_data%data_real_1d(c) = h2osno(c)
+                cur_data%data_real_1d(c) = h2osno_col(c)
              enddo
              cur_data%is_set = .true.
 
           case (L2E_STATE_H2OSFC)
              do fc = 1, num_filter
                 c = filter(fc)
-                cur_data%data_real_1d(c) = h2osfc(c)
+                cur_data%data_real_1d(c) = h2osfc_col(c)
              enddo
              cur_data%is_set = .true.
 
           case (L2E_STATE_FRAC_SNOW_EFFECTIVE)
              do fc = 1, num_filter
                 c = filter(fc)
-                cur_data%data_real_1d(c) = frac_sno_eff(c)
+                cur_data%data_real_1d(c) = frac_sno_eff_col(c)
              enddo
              cur_data%is_set = .true.
 
@@ -294,9 +295,9 @@ contains
     integer                             :: count
 
     associate(& 
-         h2osoi_liq => waterstate_vars%h2osoi_liq_col , &
-         h2osoi_ice => waterstate_vars%h2osoi_ice_col , &
-         soilp      => waterstate_vars%soilp_col        &
+         h2osoi_liq_col => waterstate_vars%h2osoi_liq_col , &
+         h2osoi_ice_col => waterstate_vars%h2osoi_ice_col , &
+         soilp_col      => waterstate_vars%soilp_col        &
          )
 
     count = 0
@@ -321,7 +322,7 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevgrnd
-                   h2osoi_liq(c,j) = cur_data%data_real_2d(c,j)
+                   h2osoi_liq_col(c,j) = cur_data%data_real_2d(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -330,7 +331,7 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevgrnd
-                   h2osoi_ice(c,j) = cur_data%data_real_2d(c,j)
+                   h2osoi_ice_col(c,j) = cur_data%data_real_2d(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -339,7 +340,7 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevgrnd
-                   soilp(c,j) = cur_data%data_real_2d(c,j)
+                   soilp_col(c,j) = cur_data%data_real_2d(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.

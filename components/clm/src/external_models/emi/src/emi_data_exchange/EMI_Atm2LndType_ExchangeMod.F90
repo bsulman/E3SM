@@ -8,11 +8,12 @@ module EMI_Atm2LndType_ExchangeMod
   use EMI_DataDimensionMod                  , only : emi_data_dimension_list_type
   use Atm2LndType          , only : atm2lnd_type
   use EMI_Atm2LndType_Constants
-  use EMI_CanopyStateType_Constants
-  use EMI_ChemStateType_Constants
+  use EMI_CNCarbonFluxType_Constants
   use EMI_CNCarbonStateType_Constants
   use EMI_CNNitrogenStateType_Constants
-  use EMI_CNCarbonFluxType_Constants
+  use EMI_CanopyStateType_Constants
+  use EMI_ChemStateType_Constants
+  use EMI_ColumnDataType_Constants
   use EMI_EnergyFluxType_Constants
   use EMI_SoilHydrologyType_Constants
   use EMI_SoilStateType_Constants
@@ -57,8 +58,8 @@ contains
     integer                             :: count
 
     associate(& 
-         forc_pbot_downscaled => atm2lndtype_vars%forc_pbot_downscaled_col , &
-         forc_t_downscaled    => atm2lndtype_vars%forc_t_downscaled_col      &
+         forc_pbot_downscaled_col => atm2lndtype_vars%forc_pbot_downscaled_col , &
+         forc_t_downscaled_col    => atm2lndtype_vars%forc_t_downscaled_col      &
          )
 
     count = 0
@@ -82,14 +83,14 @@ contains
           case (L2E_STATE_FORC_PBOT_DOWNSCALED)
              do fc = 1, num_filter
                 c = filter(fc)
-                cur_data%data_real_1d(c) = forc_pbot_downscaled(c)
+                cur_data%data_real_1d(c) = forc_pbot_downscaled_col(c)
              enddo
              cur_data%is_set = .true.
 
           case (L2E_STATE_FORC_T_DOWNSCALED)
              do fc = 1, num_filter
                 c = filter(fc)
-                cur_data%data_real_1d(c) = forc_t_downscaled(c)
+                cur_data%data_real_1d(c) = forc_t_downscaled_col(c)
              enddo
              cur_data%is_set = .true.
 
@@ -130,8 +131,8 @@ contains
     integer                             :: count
 
     associate(& 
-         forc_solad => atm2lndtype_vars%forc_solad_grc , &
-         forc_solai => atm2lndtype_vars%forc_solai_grc   &
+         forc_solad_grc => atm2lndtype_vars%forc_solad_grc , &
+         forc_solai_grc => atm2lndtype_vars%forc_solai_grc   &
          )
 
     count = 0
@@ -156,7 +157,7 @@ contains
              do fg = 1, num_filter
                 g = filter(fg)
                 do j = 1, 2
-                   cur_data%data_real_2d(g,j) = forc_solad(g,j)
+                   cur_data%data_real_2d(g,j) = forc_solad_grc(g,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -165,7 +166,7 @@ contains
              do fg = 1, num_filter
                 g = filter(fg)
                 do j = 1, 2
-                   cur_data%data_real_2d(g,j) = forc_solai(g,j)
+                   cur_data%data_real_2d(g,j) = forc_solai_grc(g,j)
                 enddo
              enddo
              cur_data%is_set = .true.
