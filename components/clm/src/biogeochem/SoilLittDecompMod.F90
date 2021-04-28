@@ -41,6 +41,7 @@ module SoilLittDecompMod
   use VegetationDataType     , only : veg_ps, veg_pf
   ! clm interface & pflotran:
   use clm_varctl             , only : use_clm_interface, use_pflotran, pf_cmode
+  use clm_varctl             , only : use_alquimia
   !
   implicit none
   save
@@ -720,7 +721,7 @@ contains
 
 
       ! MUST have already updated needed bgc variables from PFLOTRAN by this point
-      if(use_clm_interface.and.use_pflotran.and.pf_cmode) then
+      if((use_clm_interface.and.use_pflotran.and.pf_cmode) .or. use_alquimia) then
          ! fpg calculation
          do fc=1,num_soilc
             c = filter_soilc(fc)
@@ -831,7 +832,7 @@ contains
       call t_stopf('CNAllocation - phase-3')
       !------------------------------------------------------------------
 
-    if(use_pflotran.and.pf_cmode) then
+    if(use_pflotran.and.pf_cmode .or. use_alquimia) then
     ! in Allocation3_PlantCNPAlloc():
     ! smin_nh4_to_plant_vr(c,j), smin_no3_to_plant_vr(c,j), sminn_to_plant_vr(c,j) may be adjusted
     ! therefore, we need to update smin_no3_vr(c,j) & smin_nh4_vr(c,j)

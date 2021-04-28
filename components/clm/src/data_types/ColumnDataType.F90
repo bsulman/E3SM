@@ -25,6 +25,7 @@ module ColumnDataType
   use clm_varctl      , only : bound_h2osoi, use_cn, iulog, use_vertsoilc, spinup_state
   use clm_varctl      , only : use_erosion
   use clm_varctl      , only : use_clm_interface, use_pflotran, pf_cmode
+  use clm_varctl      , only : use_alquimia
   use clm_varctl      , only : hist_wrtch4diag, use_nitrif_denitrif, use_century_decomp
   use clm_varctl      , only : get_carbontag, override_bgc_restart_mismatch_dump
   use clm_varctl      , only : pf_hmode, nu_com
@@ -3929,7 +3930,7 @@ contains
             this%ntrunc(c)+ &
             this%plant_n_buffer(c) + &
             this%cropseedn_deficit(c)
-            
+
        this%totabgn (c) =  &
             this%totpftn(c) + &
             this%totprodn(c) + &
@@ -6623,7 +6624,8 @@ contains
     end do
 
     if ( (.not. is_active_betr_bgc           ) .and. &
-         (.not. (use_pflotran .and. pf_cmode))) then
+         (.not. (use_pflotran .and. pf_cmode)) .and. &
+         (.not. use_alquimia) ) then
 
        ! vertically integrate HR and decomposition cascade fluxes
        do k = 1, ndecomp_cascade_transitions
@@ -6649,7 +6651,7 @@ contains
        end do
 
 
-    elseif (is_active_betr_bgc) then
+    elseif (is_active_betr_bgc .or. use_alquimia) then
 
        do fc = 1, num_soilc
           c = filter_soilc(fc)
@@ -6995,7 +6997,7 @@ contains
        this%somhr(c)              = 0._r8
        this%lithr(c)              = 0._r8
        this%decomp_cascade_hr(c,1:ndecomp_cascade_transitions)= 0._r8
-       if (.not. (use_pflotran .and. pf_cmode)) then
+       if (.not. (use_pflotran .and. pf_cmode) .and. .not. use_alquimia) then
        ! pflotran has returned 'hr_vr(begc:endc,1:nlevdecomp)' to ALM before this subroutine is called in CNEcosystemDynNoLeaching2
        ! thus 'hr_vr_col' should NOT be set to 0
             this%hr_vr(c,1:nlevdecomp) = 0._r8
@@ -7003,7 +7005,8 @@ contains
     enddo
 
     if ( (.not. is_active_betr_bgc           ) .and. &
-         (.not. (use_pflotran .and. pf_cmode))) then
+         (.not. (use_pflotran .and. pf_cmode)) .and. &
+         (.not. use_alquimia           ) ) then
       ! vertically integrate HR and decomposition cascade fluxes
       do k = 1, ndecomp_cascade_transitions
 

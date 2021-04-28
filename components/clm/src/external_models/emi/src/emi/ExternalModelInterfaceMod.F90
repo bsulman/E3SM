@@ -307,9 +307,9 @@ contains
     case (EM_ID_ALQUIMIA)
 
         !write(iulog,*)'*******************************************'
-        write(iulog,*)'  In ELM: Initialization'
-        write(iulog,*)'  1.1 Populate lists of variables that will be exchanged between ELM and EM'
-        write(iulog,*)'      during initialization and timestepping.'
+      !   write(iulog,*)'  In ELM: Initialization'
+      !   write(iulog,*)'  1.1 Populate lists of variables that will be exchanged between ELM and EM'
+      !   write(iulog,*)'      during initialization and timestepping.'
 
         ! Initialize lists of data to be exchanged between ELM and ALQUIMIA
         ! during initialization step
@@ -334,7 +334,7 @@ contains
 
         enddo
 
-        write(iulog,*)'  1.2 Exchange variables between ELM and EM during initialization'
+      !   write(iulog,*)'  1.2 Exchange variables between ELM and EM during initialization'
 
         !$OMP PARALLEL DO PRIVATE (clump_rank, iem, bounds_clump)
         do clump_rank = 1, nclumps
@@ -369,8 +369,8 @@ contains
 
 
            ! Ensure all data needed by external model is packed
-           write(iulog,*)'     1.2.1 Value of variables send by ELM'
-           call EMID_Verify_All_Data_Is_Set(l2e_init_list(clump_rank), em_stage, print_data=.true.)
+         !   write(iulog,*)'     1.2.1 Value of variables send by ELM'
+           call EMID_Verify_All_Data_Is_Set(l2e_init_list(clump_rank), em_stage, print_data=.false.)
 
            ! Initialize the external model
            call em_alquimia(clump_rank)%Init(l2e_init_list(clump_rank), e2l_init_list(clump_rank), &
@@ -381,8 +381,8 @@ contains
           !      num_filter_col, filter_col, waterstate_vars)
 
            ! Ensure all data sent by external model is unpacked
-           write(iulog,*)'     1.2.4 Value of variables received by ELM'
-           call EMID_Verify_All_Data_Is_Set(e2l_init_list(clump_rank), em_stage, print_data=.true.)
+         !   write(iulog,*)'     1.2.4 Value of variables received by ELM'
+           call EMID_Verify_All_Data_Is_Set(e2l_init_list(clump_rank), em_stage, print_data=.false.)
 
            call l2e_init_list(clump_rank)%Destroy()
            call e2l_init_list(clump_rank)%Destroy()
@@ -633,7 +633,7 @@ contains
 
        enddo
 
-       write(iulog,*)'  1.2 Exchange variables between ELM and EM during initialization'
+      !  write(iulog,*)'  1.2 Exchange variables between ELM and EM during initialization'
 
        !$OMP PARALLEL DO PRIVATE (clump_rank, iem, bounds_clump)
        do clump_rank = 1, nclumps
@@ -671,8 +671,8 @@ contains
                num_filter_col, filter_col, soilstate_vars)
 
           ! Ensure all data needed by external model is packed
-          write(iulog,*)'     1.2.1 Value of variables send by ELM'
-          call EMID_Verify_All_Data_Is_Set(l2e_init_list(clump_rank), em_stage, print_data=.true.)
+         !  write(iulog,*)'     1.2.1 Value of variables send by ELM'
+          call EMID_Verify_All_Data_Is_Set(l2e_init_list(clump_rank), em_stage, print_data=.false.)
 
           ! Initialize the external model
           call em_stub(clump_rank)%Init(l2e_init_list(clump_rank), e2l_init_list(clump_rank), &
@@ -683,8 +683,8 @@ contains
                num_filter_col, filter_col, waterstate_vars)
 
           ! Ensure all data sent by external model is unpacked
-          write(iulog,*)'     1.2.4 Value of variables received by ELM'
-          call EMID_Verify_All_Data_Is_Set(e2l_init_list(clump_rank), em_stage, print_data=.true.)
+         !  write(iulog,*)'     1.2.4 Value of variables received by ELM'
+          call EMID_Verify_All_Data_Is_Set(e2l_init_list(clump_rank), em_stage, print_data=.false.)
 
           call l2e_init_list(clump_rank)%Destroy()
           call e2l_init_list(clump_rank)%Destroy()
@@ -1236,24 +1236,24 @@ contains
    endif
 
     if (present(carbonstate_vars)  .and. &
-         present(num_hydrologyc)   .and. &
-         present(filter_hydrologyc)) then
+         present(num_soilc)   .and. &
+         present(filter_soilc)) then
        call EMI_Unpack_CNCarbonStateType_at_Column_Level_from_EM(e2l_driver_list(iem), em_stage, &
-            num_hydrologyc, filter_hydrologyc, carbonstate_vars)
+            num_soilc, filter_soilc, carbonstate_vars)
     endif
     
     if (present(carbonflux_vars)  .and. &
-         present(num_hydrologyc)   .and. &
-         present(filter_hydrologyc)) then
+         present(num_soilc)   .and. &
+         present(filter_soilc)) then
        call EMI_Unpack_CNCarbonFluxType_at_Column_Level_from_EM(e2l_driver_list(iem), em_stage, &
-            num_hydrologyc, filter_hydrologyc, carbonflux_vars)
+            num_soilc, filter_soilc, carbonflux_vars)
     endif
     
     if (present(nitrogenstate_vars)  .and. &
-         present(num_hydrologyc)   .and. &
-         present(filter_hydrologyc)) then
+         present(num_soilc)   .and. &
+         present(filter_soilc)) then
        call EMI_Unpack_CNNitrogenStateType_at_Column_Level_from_EM(e2l_driver_list(iem), em_stage, &
-            num_hydrologyc, filter_hydrologyc, nitrogenstate_vars)
+            num_soilc, filter_soilc, nitrogenstate_vars)
     endif
 
     if (em_id == EM_ID_STUB) then
