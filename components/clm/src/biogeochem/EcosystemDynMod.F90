@@ -593,7 +593,7 @@ contains
     if( .not. use_fates ) then
 
        !----------------------------------------------------------------
-
+       call t_startf('SoilLittDecompAlloc')
        if (use_alquimia) then
           call t_startf('bgc via alquimia interface')
         
@@ -614,7 +614,6 @@ contains
           call t_stopf('bgc via alquimia interface')
      
        elseif( .not.use_clm_interface) then
-            call t_startf('SoilLittDecompAlloc')
             call SoilLittDecompAlloc (bounds, num_soilc, filter_soilc,    &
                        num_soilp, filter_soilp,                     &
                        canopystate_vars, soilstate_vars,            &
