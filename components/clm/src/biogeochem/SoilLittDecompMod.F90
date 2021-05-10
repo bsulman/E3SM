@@ -736,6 +736,11 @@ contains
                   supplement_to_sminn_vr(c,j) = col_plant_ndemand_vr(c,j) - (smin_nh4_to_plant_vr(c,j) + smin_no3_to_plant_vr(c,j))
                   smin_nh4_to_plant_vr(c,j)   = smin_nh4_to_plant_vr(c,j) + supplement_to_sminn_vr(c,j)
                   sminn_to_plant_vr(c,j) = smin_no3_to_plant_vr(c,j) + smin_nh4_to_plant_vr(c,j)
+                  ! Handle immobilization nitrogen. Potential and actual immob should be set by alquimia/Pflotran
+                  if(potential_immob_vr(c,j)>0.0) then
+                     ! For now, supplementing with potential immobilization value because only supplementing shortfall might underestimate
+                     supplement_to_sminn_vr(c,j) = supplement_to_sminn_vr(c,j) + potential_immob_vr(c,j)
+                  endif
                end do
             end do
          endif

@@ -22,6 +22,7 @@ module ExternalModelAlquimiaMod
   use EMI_WaterStateType_Constants
   use EMI_CNCarbonStateType_Constants
   use EMI_CNNitrogenStateType_Constants
+  use EMI_CNNitrogenFluxType_Constants
   use EMI_CNCarbonFluxType_Constants
 
 #ifdef USE_ALQUIMIA_LIB
@@ -63,6 +64,10 @@ module ExternalModelAlquimiaMod
     integer :: index_e2l_flux_hr
     integer :: index_e2l_state_nh4
     integer :: index_e2l_state_no3
+
+    integer :: index_e2l_flux_Nimm
+    integer :: index_e2l_flux_Nimp
+    integer :: index_e2l_flux_Nmin
     
 #ifdef USE_ALQUIMIA_LIB
     ! Chemistry engine: Should be one per thread
@@ -94,6 +99,7 @@ module ExternalModelAlquimiaMod
     integer, pointer, dimension(:)       :: pool_reaction_mapping
     integer                              :: CO2_pool_number
     integer                              :: NH4_pool_number,NO3_pool_number
+    integer                              :: Nimm_pool_number,Nmin_pool_number,Nimp_pool_number
     
    contains
      procedure, public :: Populate_L2E_Init_List  => EMAlquimia_Populate_L2E_Init_List
@@ -308,6 +314,18 @@ contains
     call e2l_list%AddDataByID(id, number_em_stages, em_stages, index)
     this%index_e2l_state_no3              = index
 
+    id                                             = E2L_FLUX_NIMM_VERTICALLY_RESOLVED
+    call e2l_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_e2l_flux_Nimm              = index
+    
+    id                                             = E2L_FLUX_NIMP_VERTICALLY_RESOLVED
+    call e2l_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_e2l_flux_Nimp              = index
+
+    id                                             = E2L_FLUX_NMIN_VERTICALLY_RESOLVED
+    call e2l_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_e2l_flux_Nmin              = index
+
     deallocate(em_stages)
 
     write(iulog,*)'E2L List:'
@@ -339,7 +357,8 @@ contains
     use clm_varpar, only : nlevdecomp, ndecomp_pools, ndecomp_cascade_transitions
     use landunit_varcon, only : istcrop,istsoil
     use clm_varctl, only : alquimia_inputfile,alquimia_engine_name,alquimia_IC_name,alquimia_CO2_name,&
-                           alquimia_NO3_name,alquimia_NH4_name,alquimia_handsoff
+                           alquimia_NO3_name,alquimia_NH4_name,alquimia_Nimp_name,alquimia_Nmin_name,alquimia_Nimm_name,&
+                           alquimia_handsoff
     use CNDecompCascadeConType, only : decomp_cascade_con
     
     use PFloTranAlquimiaInterface_module, only : PrintSizes,PrintProblemMetaData, ProcessCondition,PrintState
@@ -485,7 +504,29 @@ contains
     this%NO3_pool_number = pool_num
     ! write(iulog,*),this%carbon_pool_mapping
     ! write(iulog,*),this%nitrogen_pool_mapping
+    pool_num = find_alquimia_pool(alquimia_Nimm_name,name_list,this%chem_sizes%num_primary)
+    if (pool_num>0) then
+      write(iulog,'(a,6x,a,i3,1x,a)'),'N immobilization', '<-> Alquimia pool',pool_num,trim(alquimia_Nimm_name)
+    else
+      write(iulog,'(a,i3,1X,a)'),'WARNING: No match for pool',ii,trim(alquimia_Nimm_name)
+    endif
+    this%Nimm_pool_number = pool_num
     
+    pool_num = find_alquimia_pool(alquimia_Nimp_name,name_list,this%chem_sizes%num_primary)
+    if (pool_num>0) then
+      write(iulog,'(a,6x,a,i3,1x,a)'),'N potential immobilization', '<-> Alquimia pool',pool_num,trim(alquimia_Nimp_name)
+    else
+      write(iulog,'(a,i3,1X,a)'),'WARNING: No match for pool',ii,trim(alquimia_Nimp_name)
+    endif
+    this%Nimp_pool_number = pool_num
+
+    pool_num = find_alquimia_pool(alquimia_Nmin_name,name_list,this%chem_sizes%num_primary)
+    if (pool_num>0) then
+      write(iulog,'(a,6x,a,i3,1x,a)'),'N mineralization', '<-> Alquimia pool',pool_num,trim(alquimia_Nmin_name)
+    else
+      write(iulog,'(a,i3,1X,a)'),'WARNING: No match for pool',ii,trim(alquimia_Nmin_name)
+    endif
+    this%Nmin_pool_number = pool_num
 
     ! Need to map out reactions as well
     allocate(this%pool_reaction_mapping(ndecomp_pools))
@@ -624,6 +665,7 @@ contains
     real(r8) , pointer, dimension(:,:,:)    :: decomp_k
     real(r8) , pointer, dimension(:,:)    :: hr_e2l , temperature, h2o_liq, h2o_ice
     real(r8) , pointer, dimension(:,:)  :: no3_e2l,no3_l2e,nh4_e2l,nh4_l2e
+    real(r8) , pointer, dimension(:,:)  :: Nimm_e2l, Nimp_e2l, Nmin_e2l
     real(r8) :: CO2_before
     real(r8), parameter                 :: minval = 1.e-30_r8 ! Minimum value to pass to PFLOTRAN to avoid numerical errors with concentrations of 0
     
@@ -634,7 +676,7 @@ contains
     character(kind=C_CHAR,len=kAlquimiaMaxStringLength) :: status_message
     procedure(ReactionStepOperatorSplit), pointer :: engine_ReactionStepOperatorSplit
     procedure(GetAuxiliaryOutput), pointer   :: engine_getAuxiliaryOutput
-    real (c_double), pointer :: alquimia_data(:)
+    real (c_double), pointer :: alquimia_mobile_data(:), alquimia_immobile_data(:), alquimia_rates_data(:)
 
     ! write(iulog,*) 'Alquimia solving step!'
     
@@ -668,6 +710,10 @@ contains
     call e2l_list%GetPointerToReal2D(this%index_e2l_state_no3 , no3_e2l) ! gN/m3
     call e2l_list%GetPointerToReal2D(this%index_e2l_state_nh4 , nh4_e2l) ! gN/m3
 
+    call e2l_list%GetPointerToReal2D(this%index_e2l_flux_Nimm , Nimm_e2l) ! gN/m3/s
+    call e2l_list%GetPointerToReal2D(this%index_e2l_flux_Nimp , Nimp_e2l) ! gN/m3/s
+    call e2l_list%GetPointerToReal2D(this%index_e2l_flux_Nmin , Nmin_e2l) ! gN/m3/s
+
     
      ! Run the reactions engine for a step. Alquimia works on one cell at a time
      ! TODO: Transport needs to be integrated somehow. 
@@ -685,12 +731,14 @@ contains
              
              ! Set rate constants in properties.aqueous_kinetic_rate_cnst if in hands_on mode
              ! Should we check if we are in hands_on mode?
-             call c_f_pointer(this%chem_properties(c,j)%aqueous_kinetic_rate_cnst%data, alquimia_data, (/this%chem_properties(c,j)%aqueous_kinetic_rate_cnst%size/))
-             
+             call c_f_pointer(this%chem_properties(c,j)%aqueous_kinetic_rate_cnst%data, alquimia_rates_data, (/this%chem_properties(c,j)%aqueous_kinetic_rate_cnst%size/))
+             call c_f_pointer(this%chem_state(c,j)%total_mobile%data, alquimia_mobile_data, (/this%chem_sizes%num_primary/))
+             call c_f_pointer(this%chem_state(c,j)%total_immobile%data, alquimia_immobile_data, (/this%chem_sizes%num_primary/))
+
              do poolnum=1,ndecomp_pools
                if(this%pool_reaction_mapping(poolnum)>0) then
                 !  write(iulog, '(a,i3,a,i3,1x,a,e12.3)'), 'Setting pool',poolnum,' -> alquimia reaction ',this%pool_reaction_mapping(poolnum),'kinetic rate const to',decomp_k(c,j,poolnum)
-                 alquimia_data(this%pool_reaction_mapping(poolnum)) = decomp_k(c,j,poolnum)
+                 alquimia_rates_data(this%pool_reaction_mapping(poolnum)) = decomp_k(c,j,poolnum)
                endif
              enddo
              
@@ -698,39 +746,41 @@ contains
              ! Set soil carbon and nitrogen from land model
              ! Convert soil C,N from g/m3 to mol/m3. Assumes pool is defined as immobile, not aqueous
              ! May need to deal with case that pools are all zero (initial condition) which PFLOTRAN will not be able to solve.
-             call c_f_pointer(this%chem_state(c,j)%total_immobile%data, alquimia_data, (/this%chem_sizes%num_primary/))
+             
             !  write(iulog,*),'Before solve'
              do poolnum=1,ndecomp_pools
                if(this%carbon_pool_mapping(poolnum)>0) &  
-                 alquimia_data(this%carbon_pool_mapping(poolnum)) = max(soilcarbon_l2e(c,j,poolnum)/catomw,minval)
+                 alquimia_immobile_data(this%carbon_pool_mapping(poolnum)) = max(soilcarbon_l2e(c,j,poolnum)/catomw,minval)
                ! Separate N pool only exists if floating CN ratio
                 !  write(iulog,*),poolnum,soilnitrogen_l2e(c,j,poolnum)
                if(decomp_cascade_con%floating_cn_ratio_decomp_pools(poolnum) .and. this%nitrogen_pool_mapping(poolnum)>0) &
-                  alquimia_data(this%nitrogen_pool_mapping(poolnum)) = max(soilnitrogen_l2e(c,j,poolnum)/natomw,minval)
+                  alquimia_immobile_data(this%nitrogen_pool_mapping(poolnum)) = max(soilnitrogen_l2e(c,j,poolnum)/natomw,minval)
              enddo
              
-             CO2_before = alquimia_data(this%CO2_pool_number)*catomw
+             CO2_before = alquimia_immobile_data(this%CO2_pool_number)*catomw + &
+                          alquimia_mobile_data(this%CO2_pool_number)*catomw*(1000.0*this%chem_state(c,j)%porosity)
 
              ! Copy dissolved nitrogen species. Units need to be converted from gN/m3 to M/L. Currently assuming saturated porosity
-             call c_f_pointer(this%chem_state(c,j)%total_mobile%data, alquimia_data, (/this%chem_sizes%num_primary/))
-             if(this%NO3_pool_number>0) alquimia_data(this%NO3_pool_number) = max(no3_l2e(c,j)/natomw/(1000.0*this%chem_state(c,j)%porosity),minval)
-             if(this%NH4_pool_number>0) alquimia_data(this%NH4_pool_number) = max(nh4_l2e(c,j)/natomw/(1000.0*this%chem_state(c,j)%porosity),minval)
-            !  write(iulog,*),'NO3 and NH4',no3_l2e(c,j),nh4_l2e(c,j),alquimia_data(this%NO3_pool_number),alquimia_data(this%NH4_pool_number),this%chem_state(c,j)%porosity
+             
+             if(this%NO3_pool_number>0) alquimia_mobile_data(this%NO3_pool_number) = max(no3_l2e(c,j)/natomw/(1000.0*this%chem_state(c,j)%porosity),minval)
+             if(this%NH4_pool_number>0) alquimia_mobile_data(this%NH4_pool_number) = max(nh4_l2e(c,j)/natomw/(1000.0*this%chem_state(c,j)%porosity),minval)
 
-             CO2_before = CO2_before + alquimia_data(this%CO2_pool_number)*catomw*(1000.0*this%chem_state(c,j)%porosity)
-            
+            ! Reset diagnostic N immobilization, mineralization
+             if(this%Nimm_pool_number>0) alquimia_immobile_data(this%Nimm_pool_number) = minval
+             if(this%Nimp_pool_number>0) alquimia_immobile_data(this%Nimp_pool_number) = minval
+             if(this%Nmin_pool_number>0) alquimia_immobile_data(this%Nmin_pool_number) = minval
+
               call run_onestep(this, c,j, dt,0,max_cuts)
-              ! write(iulog,*),"Converged after",max_cuts,"cuts",c,j       
-              ! write(iulog,*),'After solve'
+              if(max_cuts>3) write(iulog,'(a,i2,a,2i3)'),"Alquimia converged after",max_cuts,"cuts",c,j
+             
               ! Set updated land model values
               ! Convert from mol/m3 to gC/m2
-              call c_f_pointer(this%chem_state(c,j)%total_immobile%data, alquimia_data, (/this%chem_sizes%num_primary/))
               do poolnum=1,ndecomp_pools
                 if(this%carbon_pool_mapping(poolnum)>0) &
-                  soilcarbon_e2l(c,j,poolnum) = alquimia_data(this%carbon_pool_mapping(poolnum))*catomw
+                  soilcarbon_e2l(c,j,poolnum) = alquimia_immobile_data(this%carbon_pool_mapping(poolnum))*catomw
                 ! Separate N pool only exists if floating CN ratio
                 if(decomp_cascade_con%floating_cn_ratio_decomp_pools(poolnum) .and. this%nitrogen_pool_mapping(poolnum)>0) then
-                   soilnitrogen_e2l(c,j,poolnum) = alquimia_data(this%nitrogen_pool_mapping(poolnum))*natomw
+                   soilnitrogen_e2l(c,j,poolnum) = alquimia_immobile_data(this%nitrogen_pool_mapping(poolnum))*natomw
                  elseif (this%carbon_pool_mapping(poolnum)>0) then
                    ! Calculate from CN ratio and C pool
                    soilnitrogen_e2l(c,j,poolnum) = soilcarbon_e2l(c,j,poolnum)/decomp_cascade_con%initial_cn_ratio(poolnum)
@@ -743,19 +793,21 @@ contains
               if(this%CO2_pool_number>0) then 
                 hr_e2l(c,j) = - CO2_before
                 ! Immobile: Convert from mol/m3 to gC/m3/s
-                hr_e2l(c,j) = hr_e2l(c,j) + alquimia_data(this%CO2_pool_number)*catomw
+                hr_e2l(c,j) = hr_e2l(c,j) + alquimia_immobile_data(this%CO2_pool_number)*catomw
                 ! Mobile: convert from mol/L to gC/m3/s. mol/L*gC/mol*1000L/m3*porosity
-                call c_f_pointer(this%chem_state(c,j)%total_mobile%data, alquimia_data, (/this%chem_sizes%num_primary/))
-                hr_e2l(c,j) = hr_e2l(c,j) + alquimia_data(this%CO2_pool_number)*catomw*(1000.0*this%chem_state(c,j)%porosity)
+                hr_e2l(c,j) = hr_e2l(c,j) + alquimia_mobile_data(this%CO2_pool_number)*catomw*(1000.0*this%chem_state(c,j)%porosity)
                 hr_e2l(c,j) = hr_e2l(c,j)/dt
               endif
               
-              
-              call c_f_pointer(this%chem_state(c,j)%total_mobile%data, alquimia_data, (/this%chem_sizes%num_primary/))
-              if(this%NO3_pool_number>0) no3_e2l(c,j) = alquimia_data(this%NO3_pool_number)*natomw*(1000.0*this%chem_state(c,j)%porosity)
-              if(this%NH4_pool_number>0) nh4_e2l(c,j) = alquimia_data(this%NH4_pool_number)*natomw*(1000.0*this%chem_state(c,j)%porosity)
-              ! write(iulog,*),'NO3 and NH4',no3_e2l(c,j),nh4_e2l(c,j),alquimia_data(this%NO3_pool_number),alquimia_data(this%NH4_pool_number),this%chem_state(c,j)%porosity
-              if((sum(soilnitrogen_l2e(c,j,:))+no3_l2e(c,j)+nh4_l2e(c,j)-(sum(soilnitrogen_e2l(c,j,:))+no3_e2l(c,j)+nh4_e2l(c,j)))*this%chem_properties(c,j)%volume>1e-9) then
+              if(this%NO3_pool_number>0) no3_e2l(c,j) = alquimia_mobile_data(this%NO3_pool_number)*natomw*(1000.0*this%chem_state(c,j)%porosity)
+              if(this%NH4_pool_number>0) nh4_e2l(c,j) = alquimia_mobile_data(this%NH4_pool_number)*natomw*(1000.0*this%chem_state(c,j)%porosity)
+
+              if(this%Nimm_pool_number>0) Nimm_e2l(c,j) = alquimia_immobile_data(this%Nimm_pool_number)*natomw/dt
+              if(this%Nimp_pool_number>0) Nimp_e2l(c,j) = alquimia_immobile_data(this%Nimp_pool_number)*natomw/dt
+              ! Nmin will be added to the NH4 pool elsewhere in ELM so skip that for now
+              ! if(this%Nmin_pool_number>0) Nmin_e2l(c,j) = alquimia_immobile_data(this%Nmin_pool_number)*natomw/dt
+
+              if(abs(sum(soilnitrogen_l2e(c,j,:))+no3_l2e(c,j)+nh4_l2e(c,j)-(sum(soilnitrogen_e2l(c,j,:))+no3_e2l(c,j)+nh4_e2l(c,j)))*this%chem_properties(c,j)%volume>1e-9) then
                 write(iulog,*),j,sum(soilnitrogen_l2e(c,j,:))+no3_l2e(c,j)+nh4_l2e(c,j),sum(soilnitrogen_e2l(c,j,:))+no3_e2l(c,j)+nh4_e2l(c,j),sum(soilnitrogen_l2e(c,j,:))+no3_l2e(c,j)+nh4_l2e(c,j)-(sum(soilnitrogen_e2l(c,j,:))+no3_e2l(c,j)+nh4_e2l(c,j))
                 write(iulog,*),'dz = ',this%chem_properties(c,j)%volume
                 write(iulog,*),sum(soilnitrogen_e2l(c,j,:)-soilnitrogen_l2e(c,j,:)),sum(soilnitrogen_e2l(c,j,:))
@@ -818,6 +870,100 @@ contains
   end function find_alquimia_pool
 
   
+  subroutine print_pools(this,c,j)
+
+    use clm_varpar, only : ndecomp_pools
+    use iso_c_binding, only : c_f_pointer, c_double
+    use CNDecompCascadeConType, only : decomp_cascade_con
+
+    implicit none
+
+    class(em_alquimia_type)              :: this
+    integer, intent(in) :: c,j
+
+    integer :: poolnum
+    character(len=256) :: poolname
+    real (c_double), pointer :: alquimia_mobile_data(:), alquimia_immobile_data(:)
+
+    call c_f_pointer(this%chem_state(c,j)%total_immobile%data, alquimia_immobile_data, (/this%chem_sizes%num_primary/))
+    call c_f_pointer(this%chem_state(c,j)%total_mobile%data, alquimia_mobile_data, (/this%chem_sizes%num_primary/))
+
+    write(iulog,*), "Carbon pool values: Immobile pools"
+    do poolnum=1,ndecomp_pools
+      poolname = trim(decomp_cascade_con%decomp_pool_name_history(poolnum))
+
+      if(this%carbon_pool_mapping(poolnum)>0) then  
+        write(iulog,'(a8,i4,e12.5)'), trim(poolname),this%carbon_pool_mapping(poolnum),alquimia_immobile_data(this%carbon_pool_mapping(poolnum))
+      else
+        write(iulog,*), trim(poolname),'Not in alquimia structure'
+      endif
+
+    enddo
+
+    if(this%CO2_pool_number>0) then
+      write(iulog,'(a8,i4,e12.5)'),'CO2',this%CO2_pool_number,alquimia_immobile_data(this%CO2_pool_number)
+    endif
+
+    write(iulog,*) "Nitrogen pool values: Immobile pools"
+    do poolnum=1,ndecomp_pools
+      if(decomp_cascade_con%floating_cn_ratio_decomp_pools(poolnum) .and. this%nitrogen_pool_mapping(poolnum)>0) then
+          poolname = trim(decomp_cascade_con%decomp_pool_name_history(poolnum))
+          write(iulog,'(a8,i4,e12.5)'),trim(poolname),this%nitrogen_pool_mapping(poolnum),alquimia_immobile_data(this%nitrogen_pool_mapping(poolnum))
+      endif
+    enddo
+
+    if(this%NH4_pool_number>0) then
+      write(iulog,'(a8,i4,e12.5)'),'NH4',this%NH4_pool_number,alquimia_immobile_data(this%NH4_pool_number)
+    else
+      write(iulog,*),'NH4 pool not in alquimia'
+    endif
+    if(this%NO3_pool_number>0) then
+      write(iulog,'(a8,i4,e12.5)'),'NO3',this%NO3_pool_number,alquimia_immobile_data(this%NO3_pool_number)
+    else
+      write(iulog,*),'NO3 pool not in alquimia'
+    endif
+    
+
+
+    write(iulog,*) "Carbon pool values: Aqueous pools"
+    
+    do poolnum=1,ndecomp_pools
+      poolname = trim(decomp_cascade_con%decomp_pool_name_history(poolnum))
+
+      if(this%carbon_pool_mapping(poolnum)>0) then  
+        write(iulog,'(a8,i4,e12.5)') trim(poolname),this%carbon_pool_mapping(poolnum),alquimia_mobile_data(this%carbon_pool_mapping(poolnum))
+      else
+        write(iulog,*) trim(poolname),'Not in alquimia structure'
+      endif
+
+    enddo
+
+    if(this%CO2_pool_number>0) then
+      write(iulog,'(a8,i4,e12.5)'),'CO2',this%CO2_pool_number,alquimia_mobile_data(this%CO2_pool_number)
+    endif
+
+    write(iulog,*) "Nitrogen pool values: Aqueous pools"
+    do poolnum=1,ndecomp_pools
+      if(decomp_cascade_con%floating_cn_ratio_decomp_pools(poolnum) .and. this%nitrogen_pool_mapping(poolnum)>0) then
+          poolname = trim(decomp_cascade_con%decomp_pool_name_history(poolnum))
+          write(iulog,'(a8,i4,e12.5)'),trim(poolname),this%nitrogen_pool_mapping(poolnum),alquimia_mobile_data(this%nitrogen_pool_mapping(poolnum))
+      endif
+    enddo
+
+    if(this%NH4_pool_number>0) then
+      write(iulog,'(a8,i4,e12.5)'),'NH4',this%NH4_pool_number,alquimia_mobile_data(this%NH4_pool_number)
+    else
+      write(iulog,*),'NH4 pool not in alquimia'
+    endif
+    if(this%NO3_pool_number>0) then
+      write(iulog,'(a8,i4,e12.5)'),'NO3',this%NO3_pool_number,alquimia_mobile_data(this%NO3_pool_number)
+    else
+      write(iulog,*),'NO3 pool not in alquimia'
+    endif
+    
+
+  end subroutine
+
   recursive subroutine run_onestep(this,c,j,dt,num_cuts,max_cuts)
     
     use, intrinsic :: iso_c_binding, only : C_CHAR
@@ -862,7 +1008,8 @@ contains
     else ! Solve did not converge. Cut timestep, and bail out if too short
       if(actual_dt/2 < min_dt) then
         call c_f_string_ptr(this%chem_status%message,status_message)
-        write(msg,*) "Error: Alquimia ReactionStepOperatorSplit failed to converge after",num_cuts,"cuts to dt =",actual_dt,'s'
+        write(msg,'(a,i3,a,f1.2,a,i3,a,i5)') "Error: Alquimia ReactionStepOperatorSplit failed to converge after ",num_cuts,"cuts to dt = ",actual_dt,' s. Layer = ',j,"Col = ",c
+        call print_pools(this,c,j)
         call printState(this%chem_state(c,j))
         call endrun(msg=msg)
       else

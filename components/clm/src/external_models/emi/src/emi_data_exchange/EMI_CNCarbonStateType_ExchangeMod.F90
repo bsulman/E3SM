@@ -12,6 +12,7 @@ module EMI_CNCarbonStateType_ExchangeMod
   use EMI_ChemStateType_Constants
   use EMI_CNCarbonStateType_Constants
   use EMI_CNNitrogenStateType_Constants
+  use EMI_CNNitrogenFluxType_Constants
   use EMI_CNCarbonFluxType_Constants
   use EMI_ColumnEnergyStateType_Constants
   use EMI_EnergyFluxType_Constants

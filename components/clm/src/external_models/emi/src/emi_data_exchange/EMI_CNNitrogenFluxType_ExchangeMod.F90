@@ -1,4 +1,4 @@
-module EMI_CNNitrogenStateType_ExchangeMod
+module EMI_CNNitrogenFluxType_ExchangeMod
   !
   use shr_kind_mod                          , only : r8 => shr_kind_r8
   use shr_log_mod                           , only : errMsg => shr_log_errMsg
@@ -6,7 +6,7 @@ module EMI_CNNitrogenStateType_ExchangeMod
   use clm_varctl                            , only : iulog
   use EMI_DataMod                           , only : emi_data_list, emi_data
   use EMI_DataDimensionMod                  , only : emi_data_dimension_list_type
-  use ColumnDataType       , only : column_nitrogen_state
+  use ColumnDataType       , only : column_nitrogen_flux
   use EMI_Atm2LndType_Constants
   use EMI_CanopyStateType_Constants
   use EMI_ChemStateType_Constants
@@ -28,30 +28,29 @@ module EMI_CNNitrogenStateType_ExchangeMod
   implicit none
   !
   !
-  public :: EMI_Pack_CNNitrogenStateType_at_Column_Level_for_EM
-  public :: EMI_Unpack_CNNitrogenStateType_at_Column_Level_from_EM
+  public :: EMI_Pack_CNNitrogenFluxType_at_Column_Level_for_EM
+  public :: EMI_Unpack_CNNitrogenFluxType_at_Column_Level_from_EM
 
 contains
   
 !-----------------------------------------------------------------------
-  subroutine EMI_Pack_CNNitrogenStateType_at_Column_Level_for_EM(data_list, em_stage, &
-        num_filter, filter, col_ns)
+  subroutine EMI_Pack_CNNitrogenFluxType_at_Column_Level_for_EM(data_list, em_stage, &
+        num_filter, filter, col_nf)
     !
     ! !DESCRIPTION:
-    ! Pack data from ALM col_ns for EM
+    ! Pack data from ALM col_nf for EM
     !
     ! !USES:
     use clm_varpar             , only : nlevdecomp_full
-    use clm_varpar             , only : ndecomp_pools
     !
     implicit none
     !
     ! !ARGUMENTS:
-    class(emi_data_list)        , intent(in) :: data_list
-    integer                     , intent(in) :: em_stage
-    integer                     , intent(in) :: num_filter
-    integer                     , intent(in) :: filter(:)
-    type(column_nitrogen_state) , intent(in) :: col_ns
+    class(emi_data_list)       , intent(in) :: data_list
+    integer                    , intent(in) :: em_stage
+    integer                    , intent(in) :: num_filter
+    integer                    , intent(in) :: filter(:)
+    type(column_nitrogen_flux) , intent(in) :: col_nf
     !
     ! !LOCAL_VARIABLES:
     integer                             :: fc,c,j,k
@@ -61,9 +60,9 @@ contains
     integer                             :: count
 
     associate(& 
-         decomp_npools_vr => col_ns%decomp_npools_vr , &
-         smin_nh4_vr      => col_ns%smin_nh4_vr      , &
-         smin_no3_vr      => col_ns%smin_no3_vr        &
+         actual_immob_vr    => col_nf%actual_immob_vr    , &
+         potential_immob_vr => col_nf%potential_immob_vr , &
+         gross_nmin_vr      => col_nf%gross_nmin_vr        &
          )
 
     count = 0
@@ -84,31 +83,29 @@ contains
 
           select case (cur_data%id)
 
-          case (L2E_STATE_NITROGEN_POOLS_VERTICALLY_RESOLVED)
+          case (L2E_FLUX_NIMM_VERTICALLY_RESOLVED)
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevdecomp_full
-                   do k = 1, ndecomp_pools
-                      cur_data%data_real_3d(c,j,k) = decomp_npools_vr(c,j,k)
-                   enddo
+                   cur_data%data_real_2d(c,j) = actual_immob_vr(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
 
-          case (L2E_STATE_NH4_VERTICALLY_RESOLVED)
+          case (L2E_FLUX_NIMP_VERTICALLY_RESOLVED)
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevdecomp_full
-                   cur_data%data_real_2d(c,j) = smin_nh4_vr(c,j)
+                   cur_data%data_real_2d(c,j) = potential_immob_vr(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
 
-          case (L2E_STATE_NO3_VERTICALLY_RESOLVED)
+          case (L2E_FLUX_NMIN_VERTICALLY_RESOLVED)
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevdecomp_full
-                   cur_data%data_real_2d(c,j) = smin_no3_vr(c,j)
+                   cur_data%data_real_2d(c,j) = gross_nmin_vr(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -122,27 +119,26 @@ contains
 
     end associate
 
-  end subroutine EMI_Pack_CNNitrogenStateType_at_Column_Level_for_EM
+  end subroutine EMI_Pack_CNNitrogenFluxType_at_Column_Level_for_EM
 
 !-----------------------------------------------------------------------
-  subroutine EMI_Unpack_CNNitrogenStateType_at_Column_Level_from_EM(data_list, em_stage, &
-        num_filter, filter, col_ns)
+  subroutine EMI_Unpack_CNNitrogenFluxType_at_Column_Level_from_EM(data_list, em_stage, &
+        num_filter, filter, col_nf)
     !
     ! !DESCRIPTION:
-    ! Unpack data for ALM col_ns from EM
+    ! Unpack data for ALM col_nf from EM
     !
     ! !USES:
     use clm_varpar             , only : nlevdecomp_full
-    use clm_varpar             , only : ndecomp_pools
     !
     implicit none
     !
     ! !ARGUMENTS:
-    class(emi_data_list)        , intent(in) :: data_list
-    integer                     , intent(in) :: em_stage
-    integer                     , intent(in) :: num_filter
-    integer                     , intent(in) :: filter(:)
-    type(column_nitrogen_state) , intent(in) :: col_ns
+    class(emi_data_list)       , intent(in) :: data_list
+    integer                    , intent(in) :: em_stage
+    integer                    , intent(in) :: num_filter
+    integer                    , intent(in) :: filter(:)
+    type(column_nitrogen_flux) , intent(in) :: col_nf
     !
     ! !LOCAL_VARIABLES:
     integer                             :: fc,c,j,k
@@ -152,9 +148,9 @@ contains
     integer                             :: count
 
     associate(& 
-         decomp_npools_vr => col_ns%decomp_npools_vr , &
-         smin_nh4_vr      => col_ns%smin_nh4_vr      , &
-         smin_no3_vr      => col_ns%smin_no3_vr        &
+         actual_immob_vr    => col_nf%actual_immob_vr    , &
+         potential_immob_vr => col_nf%potential_immob_vr , &
+         gross_nmin_vr      => col_nf%gross_nmin_vr        &
          )
 
     count = 0
@@ -175,31 +171,29 @@ contains
 
           select case (cur_data%id)
 
-          case (E2L_STATE_NITROGEN_POOLS_VERTICALLY_RESOLVED)
+          case (E2L_FLUX_NIMM_VERTICALLY_RESOLVED)
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevdecomp_full
-                   do k = 1, ndecomp_pools
-                      decomp_npools_vr(c,j,k) = cur_data%data_real_3d(c,j,k)
-                   enddo
+                   actual_immob_vr(c,j) = cur_data%data_real_2d(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
 
-          case (E2L_STATE_NH4_VERTICALLY_RESOLVED)
+          case (E2L_FLUX_NIMP_VERTICALLY_RESOLVED)
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevdecomp_full
-                   smin_nh4_vr(c,j) = cur_data%data_real_2d(c,j)
+                   potential_immob_vr(c,j) = cur_data%data_real_2d(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
 
-          case (E2L_STATE_NO3_VERTICALLY_RESOLVED)
+          case (E2L_FLUX_NMIN_VERTICALLY_RESOLVED)
              do fc = 1, num_filter
                 c = filter(fc)
                 do j = 1, nlevdecomp_full
-                   smin_no3_vr(c,j) = cur_data%data_real_2d(c,j)
+                   gross_nmin_vr(c,j) = cur_data%data_real_2d(c,j)
                 enddo
              enddo
              cur_data%is_set = .true.
@@ -213,7 +207,7 @@ contains
 
     end associate
 
-  end subroutine EMI_Unpack_CNNitrogenStateType_at_Column_Level_from_EM
+  end subroutine EMI_Unpack_CNNitrogenFluxType_at_Column_Level_from_EM
 
 
-end module EMI_CNNitrogenStateType_ExchangeMod
+end module EMI_CNNitrogenFluxType_ExchangeMod

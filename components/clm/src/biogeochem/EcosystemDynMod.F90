@@ -606,6 +606,7 @@ contains
               carbonstate_vars  = col_cs                    , &
               carbonflux_vars   = col_cf                    , &
               nitrogenstate_vars= col_ns                    , &
+              nitrogenflux_vars = col_nf                    , &
               waterstate_vars   = waterstate_vars           , &
               num_soilc         = num_soilc                 , &
               filter_soilc      = filter_soilc              , &
