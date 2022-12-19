@@ -37,7 +37,7 @@ contains
     ! On the radiation time step, update all the prognostic carbon state
     ! variables affected by fire fluxes and also erosion flux
     !
-    use tracer_varcon       , only : is_active_betr_bgc
+    
     use subgridAveMod       , only : p2c        
     ! !ARGUMENTS:
     integer                , intent(in)    :: num_soilc       ! number of soil columns in filter
@@ -69,7 +69,7 @@ contains
       ! set time steps
       dt = real( get_step_size(), r8 )
 
-      if ( .not.is_active_betr_bgc )then
+      if ( .not. .false.  )then
          ! column level carbon fluxes from fire
          if (.not.(use_pflotran .and. pf_cmode)) then
              do j = 1, nlevdecomp

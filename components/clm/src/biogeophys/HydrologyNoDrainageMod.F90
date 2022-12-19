@@ -43,7 +43,7 @@ contains
        atm2lnd_vars, soilstate_vars, energyflux_vars, temperature_vars, &
        waterflux_vars, waterstate_vars, &
        soilhydrology_vars, aerosol_vars, &
-       soil_water_retention_curve, ep_betr, &
+       soil_water_retention_curve, &
        alm_fates)
     !
     ! !DESCRIPTION:
@@ -65,7 +65,7 @@ contains
     use landunit_varcon      , only : istice, istwet, istsoil, istice_mec, istcrop, istdlak 
     use column_varcon        , only : icol_roof, icol_road_imperv, icol_road_perv, icol_sunwall
     use column_varcon        , only : icol_shadewall
-    use clm_varctl           , only : use_cn, use_betr, use_fates, use_pflotran, pf_hmode
+    use clm_varctl           , only : use_cn, use_fates, use_pflotran, pf_hmode
     use clm_varpar           , only : nlevgrnd, nlevsno, nlevsoi, nlevurb
     use clm_time_manager     , only : get_step_size, get_nstep
     use SnowHydrologyMod     , only : SnowCompaction, CombineSnowLayers, DivideSnowLayers
@@ -77,7 +77,6 @@ contains
     use SoilHydrologyMod     , only : DrainageVSFM
     use SoilWaterMovementMod , only : Compute_EffecRootFrac_And_VertTranSink_Default
     use CLMFatesInterfaceMod , only : hlm_fates_interface_type
-    use BeTRSimulationALM    , only : betr_simulation_alm_type
     !
     ! !ARGUMENTS:
     type(bounds_type)        , intent(in)    :: bounds               
@@ -102,7 +101,6 @@ contains
     type(aerosol_type)       , intent(inout) :: aerosol_vars
     type(soilhydrology_type) , intent(inout) :: soilhydrology_vars
     class(soil_water_retention_curve_type), intent(in) :: soil_water_retention_curve
-    class(betr_simulation_alm_type), intent(inout) :: ep_betr
     type(hlm_fates_interface_type) , intent(inout) :: alm_fates
     !
     ! !LOCAL VARIABLES:
@@ -214,11 +212,6 @@ contains
       !------------------------------------------------------------------------------------
       end if
       !------------------------------------------------------------------------------------
-
-      if (use_betr) then
-        call ep_betr%BeTRSetBiophysForcing(bounds, col_pp, veg_pp, 1, nlevsoi, waterstate_vars=waterstate_vars)
-        call ep_betr%PreDiagSoilColWaterFlux(num_hydrologyc, filter_hydrologyc)
-      endif
       
       if (use_vsfm) then
          call DrainageVSFM(bounds, num_hydrologyc, filter_hydrologyc, &
@@ -254,15 +247,6 @@ contains
       end if
       !------------------------------------------------------------------------------------
 
-            
-      if (use_betr) then
-        call ep_betr%BeTRSetBiophysForcing(bounds, col_pp, veg_pp, 1, nlevsoi, waterstate_vars=waterstate_vars, &
-           waterflux_vars=waterflux_vars, soilhydrology_vars = soilhydrology_vars)
-
-        call ep_betr%DiagAdvWaterFlux(num_hydrologyc, filter_hydrologyc)
-
-        call ep_betr%RetrieveBiogeoFlux(bounds, 1, nlevsoi, waterflux_vars=waterflux_vars)  
-      endif
              
       if (use_vichydro) then
          ! mapping soilmoist from CLM to VIC layers for runoff calculations
@@ -287,12 +271,6 @@ contains
       end if
       !------------------------------------------------------------------------------------
 
-
-      if (use_betr) then
-         !apply dew and sublimation fluxes, this is a temporary work aroud for tracking water isotope
-         !Jinyun Tang, Feb 4, 2015
-         call ep_betr%CalcDewSubFlux(bounds, col_pp, num_hydrologyc, filter_hydrologyc)
-      endif           
       ! Natural compaction and metamorphosis.
       call SnowCompaction(bounds, num_snowc, filter_snowc, &
            temperature_vars, waterstate_vars)

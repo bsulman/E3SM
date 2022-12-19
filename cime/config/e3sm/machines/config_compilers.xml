@@ -369,6 +369,7 @@ for mct, etc.
   </CFLAGS>
   <FFLAGS>
     <base> -mcmodel=small -fconvert=big-endian -ffree-line-length-none -ffixed-line-length-none </base>
+    <append> -fallow-argument-mismatch </append>
     <append> -I$(NETCDF_PATH)/include -I$(HDF5_PATH)/include </append>
   </FFLAGS>
   <LDFLAGS>
@@ -404,6 +405,32 @@ for mct, etc.
   <MPICXX>$(MPI_ROOT)/bin/mpicxx</MPICXX>
   <MPIFC>$(MPI_ROOT)/bin/mpifort</MPIFC>
 </compiler>
+
+<compiler MACH="wsl" COMPILER="gnu">
+  <NETCDF_PATH>$ENV{NETCDF_PATH}</NETCDF_PATH> <!-- this is needed for cmake list of CLM, and cannot be passing from machine configuration (weired) -->
+  <CFLAGS>
+    <append> -I$(NETCDF_PATH)/include -I$(HDF5_PATH)/include </append>
+  </CFLAGS>
+  <FFLAGS>
+    <base> -fconvert=big-endian -ffree-line-length-none -ffixed-line-length-none </base>
+    <append> -fallow-argument-mismatch </append>
+    <append> -I$(NETCDF_PATH)/include -I$(HDF5_PATH)/include </append>
+  </FFLAGS>
+  <LDFLAGS>
+    <append MODEL="driver"> -L$(NETCDF_PATH)/lib -Wl,-rpath=$(NETCDF_PATH)/lib -lnetcdff -lnetcdf </append>
+    <append MODEL="driver">-L$(HDF5_PATH)/lib  -Wl,-rpath=$(NETCDF_PATH)/lib -lhdf5_hl -lhdf5 -lhdf5hl_fortran -lhdf5_fortran </append>
+  </LDFLAGS>
+  <SLIBS>
+    <append> -L$(BLASLAPACK_LIBDIR) -lblas -llapack </append>
+  </SLIBS>
+  <SFC>$(FC_ROOT)/bin/gfortran</SFC>
+  <SCC>$(CC_ROOT)/bin/gcc</SCC>
+  <SCXX>$(CC_ROOT)/bin/g++</SCXX>
+  <MPICC>$(MPI_ROOT)/bin/mpicc</MPICC>
+  <MPICXX>$(MPI_ROOT)/bin/mpicxx</MPICXX>
+  <MPIFC>$(MPI_ROOT)/bin/mpifort</MPIFC>
+</compiler>
+
 
 <compiler COMPILER="pathscale">
   <CFLAGS>

@@ -18,7 +18,7 @@ module PhosphorusStateUpdate3Mod
   use PhosphorusStateType , only : phosphorusstate_type
   use PhosphorusFLuxType  , only : phosphorusflux_type
   use soilorder_varcon    , only : smax,ks_sorption
-  use tracer_varcon       , only : is_active_betr_bgc
+  
   ! bgc interface & pflotran:
   use clm_varctl          , only : use_pflotran, pf_cmode
   use clm_varctl          , only : nu_com
@@ -93,7 +93,7 @@ contains
             flux_mineralization(c,j) = 0._r8
          enddo
       enddo
-      if(is_active_betr_bgc)then
+      if( .false. )then
         do j = 1, nlevdecomp
           do fc = 1,num_soilc
             c = filter_soilc(fc)
@@ -292,7 +292,7 @@ contains
          end do
       end do
 
-    endif !is_active_betr_bgc
+    endif ! .false. 
 
     ! soil P loss due to soil erosion
     if ( ero_ccycle ) then

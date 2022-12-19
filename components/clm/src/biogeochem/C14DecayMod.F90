@@ -43,7 +43,6 @@ contains
     ! !DESCRIPTION:
     ! On the radiation time step, calculate the radioactive decay of C14
     !
-    use tracer_varcon, only : is_active_betr_bgc      
     ! !ARGUMENTS:
     integer                , intent(in)    :: num_soilc       ! number of soil columns filter
     integer                , intent(in)    :: filter_soilc(:) ! filter for soil columns
@@ -107,7 +106,7 @@ contains
          seedc(c) = seedc(c) *  (1._r8 - decay_const * dt)
       end do ! end of columns loop
 
-      if (.not. is_active_betr_bgc) then
+      if (.not.  .false. ) then
          do l = 1, ndecomp_pools
             if ( spinup_state .eq. 1) then
                ! speed up radioactive decay by the same factor as decomposition so tat SOM ages prematurely in all respects
