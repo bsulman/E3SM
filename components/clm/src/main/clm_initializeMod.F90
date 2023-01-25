@@ -19,6 +19,7 @@ module clm_initializeMod
   use readParamsMod    , only : readSharedParameters, readPrivateParameters
   use ncdio_pio        , only : file_desc_t
   use FatesInterfaceMod, only : set_fates_global_elements
+  use clm_varpar       , only : mxpft, numveg, numpft
   ! 
   !-----------------------------------------
   ! Definition of component types
@@ -243,6 +244,18 @@ contains
     ! Independent of model resolution, Needs to stay before surfrd_get_data
 
     call pftconrd()
+    ! by user-defined PFT (numbers and names), 'numpft' changed and other indices
+    ! a few arrays had been allocated in elm_initializedMod.F90:L231-233 and require redo after this 'pftconrd' call
+    if (numpft/=mxpft .or. numpft/=numveg) then
+       if (associated(wt_nat_patch)) deallocate(wt_nat_patch)
+       allocate (wt_nat_patch (begg:endg, natpft_lb:natpft_ub ))
+       if (associated(wt_cft)) deallocate(wt_cft)
+       allocate (wt_cft       (begg:endg, cft_lb:cft_ub       ))
+       if (associated(fert_cft)) deallocate(fert_cft)
+       allocate (fert_cft     (begg:endg, cft_lb:cft_ub       ))
+    endif
+
+
     call soilorder_conrd()
 
     ! Read in FATES parameter values early in the call sequence as well
