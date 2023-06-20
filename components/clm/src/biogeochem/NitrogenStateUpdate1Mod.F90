@@ -20,7 +20,6 @@ module NitrogenStateUpdate1Mod
   use ColumnDataType         , only : col_ns, col_nf
   use VegetationType         , only : veg_pp
   use VegetationDataType     , only : veg_ns, veg_nf
-  use tracer_varcon          , only : is_active_betr_bgc
   ! bgc interface & pflotran:
   use clm_varctl             , only : use_pflotran, pf_cmode
   ! forest fertilization experiment
@@ -113,7 +112,7 @@ contains
     ! On the radiation time step, update all the prognostic nitrogen state
     ! variables (except for gap-phase mortality and fire fluxes)
     !
-    use tracer_varcon, only : is_active_betr_bgc      
+          
     ! !ARGUMENTS:
     integer                  , intent(in)    :: num_soilc       ! number of soil columns in filter
     integer                  , intent(in)    :: filter_soilc(:) ! filter for soil columns
@@ -155,7 +154,7 @@ contains
 
       ! column-level fluxes
 
-      if (.not. is_active_betr_bgc .and. .not.(use_pflotran .and. pf_cmode)) then
+      if (.not.  .false.  .and. .not.(use_pflotran .and. pf_cmode)) then
 
          do j = 1, nlevdecomp
             do fc = 1,num_soilc
@@ -338,7 +337,7 @@ contains
             end do
             
          end if
-      endif  !end if is_active_betr_bgc 
+      endif  !end if  .false.  
 
       ! forest fertilization
       call get_curr_date(kyr, kmo, kda, mcsec)
@@ -376,7 +375,7 @@ contains
             veg_ns%livecrootn(p)      = veg_ns%livecrootn(p)      + veg_nf%livecrootn_xfer_to_livecrootn(p)*dt
             veg_ns%livecrootn_xfer(p) = veg_ns%livecrootn_xfer(p) - veg_nf%livecrootn_xfer_to_livecrootn(p)*dt
 
-         if (woody(ivt(p)) == 1.0_r8) then
+         if (woody(ivt(p)) >= 1._r8) then
             veg_ns%livestemn(p)       = veg_ns%livestemn(p)       + veg_nf%livestemn_xfer_to_livestemn(p)*dt
             veg_ns%livestemn_xfer(p)  = veg_ns%livestemn_xfer(p)  - veg_nf%livestemn_xfer_to_livestemn(p)*dt
             veg_ns%deadstemn(p)       = veg_ns%deadstemn(p)       + veg_nf%deadstemn_xfer_to_deadstemn(p)*dt
@@ -400,7 +399,7 @@ contains
          veg_ns%retransn(p) = veg_ns%retransn(p) + veg_nf%leafn_to_retransn(p)*dt
 
          ! live wood turnover and retranslocation fluxes
-         if (woody(ivt(p)) == 1._r8) then
+         if (woody(ivt(p)) >= 1._r8) then
             veg_ns%livestemn(p)  = veg_ns%livestemn(p)  - veg_nf%livestemn_to_deadstemn(p)*dt
             veg_ns%deadstemn(p)  = veg_ns%deadstemn(p)  + veg_nf%livestemn_to_deadstemn(p)*dt
             veg_ns%livestemn(p)  = veg_ns%livestemn(p)  - veg_nf%livestemn_to_retransn(p)*dt
@@ -450,7 +449,7 @@ contains
             veg_ns%npool(p)              = veg_ns%npool(p)              - veg_nf%npool_to_livecrootn_storage(p)*dt
             veg_ns%livecrootn_storage(p) = veg_ns%livecrootn_storage(p) + veg_nf%npool_to_livecrootn_storage(p)*dt
 
-         if (woody(ivt(p)) == 1._r8) then
+         if (woody(ivt(p)) >= 1._r8) then
             veg_ns%npool(p)              = veg_ns%npool(p)              - veg_nf%npool_to_livestemn(p)*dt
             veg_ns%livestemn(p)          = veg_ns%livestemn(p)          + veg_nf%npool_to_livestemn(p)*dt
             veg_ns%npool(p)              = veg_ns%npool(p)              - veg_nf%npool_to_livestemn_storage(p)*dt
@@ -484,7 +483,7 @@ contains
             veg_ns%livecrootn_storage(p) = veg_ns%livecrootn_storage(p) - veg_nf%livecrootn_storage_to_xfer(p)*dt
             veg_ns%livecrootn_xfer(p)    = veg_ns%livecrootn_xfer(p)    + veg_nf%livecrootn_storage_to_xfer(p)*dt
 
-         if (woody(ivt(p)) == 1._r8) then
+         if (woody(ivt(p)) >= 1._r8) then
             veg_ns%livestemn_storage(p)  = veg_ns%livestemn_storage(p)  - veg_nf%livestemn_storage_to_xfer(p)*dt
             veg_ns%livestemn_xfer(p)     = veg_ns%livestemn_xfer(p)     + veg_nf%livestemn_storage_to_xfer(p)*dt
             veg_ns%deadstemn_storage(p)  = veg_ns%deadstemn_storage(p)  - veg_nf%deadstemn_storage_to_xfer(p)*dt

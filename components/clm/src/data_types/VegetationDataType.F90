@@ -20,7 +20,7 @@ module VegetationDataType
   use pftvarcon       , only : npcropmin, noveg, nstor
   use clm_varctl      , only : iulog, use_cn, spinup_state, spinup_mortality_factor, use_fates  
   use clm_varctl      , only : nu_com, use_crop, use_c13
-  use clm_varctl      , only : use_lch4, use_betr
+  use clm_varctl      , only : use_lch4
   use histFileMod     , only : hist_addfld1d, hist_addfld2d, no_snow_normal
   use ncdio_pio       , only : file_desc_t, ncd_io, ncd_double, ncd_int, ncd_inqvdlen
   use decompMod       , only : bounds_type, get_proc_global
@@ -2450,7 +2450,7 @@ module VegetationDataType
              this%livestemc_storage(p) = 0._r8 
              this%livestemc_xfer(p)    = 0._r8 
 
-             if (veg_vp%woody(veg_pp%itype(p)) == 1._r8) then
+             if (veg_vp%woody(veg_pp%itype(p)) >= 1._r8) then
                 this%deadstemc(p) = 0.1_r8 * ratio
              else
                 this%deadstemc(p) = 0._r8 
@@ -3911,7 +3911,7 @@ module VegetationDataType
           ! tree types need to be initialized with some stem mass so that
           ! roughness length is not zero in canopy flux calculation
 
-          if (veg_vp%woody(veg_pp%itype(p)) == 1._r8) then
+          if (veg_vp%woody(veg_pp%itype(p)) >= 1._r8) then
              this%deadstemn(p) = veg_cs%deadstemc(p) / veg_vp%deadwdcn(veg_pp%itype(p))
           else
              this%deadstemn(p) = 0._r8
@@ -4576,7 +4576,7 @@ module VegetationDataType
           ! tree types need to be initialized with some stem mass so that
           ! roughness length is not zero in canopy flux calculation
 
-          if (veg_vp%woody(veg_pp%itype(p)) == 1._r8) then
+          if (veg_vp%woody(veg_pp%itype(p)) >= 1._r8) then
              this%deadstemp(p) = veg_cs%deadstemc(p) / veg_vp%deadwdcp(veg_pp%itype(p))
           else
              this%deadstemp(p) = 0._r8
@@ -7984,7 +7984,7 @@ module VegetationDataType
             interpinic_flag='interp', readvar=readvar, data=this%grainc_storage_to_xfer)
     end if
 
-    if (use_lch4 .or. use_betr) then
+    if (use_lch4) then
        call restartvar(ncid=ncid, flag=flag, varname='tempavg_agnpp', xtype=ncd_double,  &
             dim1name='pft',&
             long_name='Temp. Average AGNPP',units='gC/m^2/s', &

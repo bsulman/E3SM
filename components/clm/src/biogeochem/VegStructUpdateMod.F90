@@ -165,7 +165,7 @@ contains
             tsai_min = tsai_min * 0.5_r8
             tsai(p) = max(tsai_alpha*tsai_old+max(tlai_old-tlai(p),0._r8),tsai_min)
 
-            if (woody(ivt(p)) == 1._r8) then
+            if (woody(ivt(p)) >= 1._r8) then
 
                ! trees and shrubs
 

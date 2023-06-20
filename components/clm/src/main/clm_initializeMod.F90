@@ -11,7 +11,7 @@ module clm_initializeMod
   use abortutils       , only : endrun
   use clm_varctl       , only : nsrest, nsrStartup, nsrContinue, nsrBranch
   use clm_varctl       , only : create_glacier_mec_landunit, iulog
-  use clm_varctl       , only : use_lch4, use_cn, use_voc, use_c13, use_c14, use_fates, use_betr  
+  use clm_varctl       , only : use_lch4, use_cn, use_voc, use_c13, use_c14, use_fates  
   use clm_varsur       , only : wt_lunit, urban_valid, wt_nat_patch, wt_cft, wt_glc_mec, topo_glc_mec
   use clm_varsur       , only : fert_cft
   use perf_mod         , only : t_startf, t_stopf
@@ -19,7 +19,7 @@ module clm_initializeMod
   use readParamsMod    , only : readSharedParameters, readPrivateParameters
   use ncdio_pio        , only : file_desc_t
   use FatesInterfaceMod, only : set_fates_global_elements
-  use BeTRSimulationALM, only : create_betr_simulation_alm
+  use clm_varpar       , only : mxpft, numveg, numpft
   ! 
   !-----------------------------------------
   ! Definition of component types
@@ -244,6 +244,18 @@ contains
     ! Independent of model resolution, Needs to stay before surfrd_get_data
 
     call pftconrd()
+    ! by user-defined PFT (numbers and names), 'numpft' changed and other indices
+    ! a few arrays had been allocated in elm_initializedMod.F90:L231-233 and require redo after this 'pftconrd' call
+    if (numpft/=mxpft .or. numpft/=numveg) then
+       if (associated(wt_nat_patch)) deallocate(wt_nat_patch)
+       allocate (wt_nat_patch (begg:endg, natpft_lb:natpft_ub ))
+       if (associated(wt_cft)) deallocate(wt_cft)
+       allocate (wt_cft       (begg:endg, cft_lb:cft_ub       ))
+       if (associated(fert_cft)) deallocate(fert_cft)
+       allocate (fert_cft     (begg:endg, cft_lb:cft_ub       ))
+    endif
+
+
     call soilorder_conrd()
 
     ! Read in FATES parameter values early in the call sequence as well
@@ -440,9 +452,7 @@ contains
     use SoilWaterRetentionCurveFactoryMod   , only : create_soil_water_retention_curve
     use clm_varctl                          , only : use_clm_interface, use_pflotran
     use clm_interface_pflotranMod           , only : clm_pf_interface_init !, clm_pf_set_restart_stamp
-    use tracer_varcon         , only : is_active_betr_bgc    
     use clm_time_manager      , only : is_restart
-    use ALMbetrNLMod          , only : betr_namelist_buffer
     !
     ! !ARGUMENTS    
     implicit none
@@ -574,16 +584,6 @@ contains
 
     call clm_inst_biogeophys(bounds_proc)
 
-    if(use_betr)then
-      !allocate memory for betr simulator
-      allocate(ep_betr, source=create_betr_simulation_alm())
-      !set internal filters for betr
-      call ep_betr%BeTRSetFilter(maxpft_per_col=max_patch_per_col, boffline=.false.)
-      call ep_betr%InitOnline(bounds_proc, lun_pp, col_pp, veg_pp, waterstate_vars, betr_namelist_buffer, masterproc)
-      is_active_betr_bgc = ep_betr%do_soibgc()
-    else
-      allocate(ep_betr, source=create_betr_simulation_alm())
-    endif
     
     call SnowOptics_init( ) ! SNICAR optical parameters:
 
@@ -600,7 +600,7 @@ contains
     call readPrivateParameters()
 
     if (use_cn .or. use_fates) then
-       if (.not. is_active_betr_bgc)then
+       if (.not.  .false. )then
           if (use_century_decomp) then
            ! Note that init_decompcascade_bgc needs cnstate_vars to be initialized
              call init_decompcascade_bgc(bounds_proc, cnstate_vars, soilstate_vars)
@@ -711,7 +711,6 @@ contains
                soilstate_vars, solarabs_vars, surfalb_vars, temperature_vars,                 &
                waterflux_vars, waterstate_vars, sedflux_vars,                                 &
                phosphorusstate_vars,phosphorusflux_vars,                                      &
-               ep_betr,                                                                       &
                alm_fates, glc2lnd_vars, crop_vars)
        end if
 
@@ -727,7 +726,6 @@ contains
             soilstate_vars, solarabs_vars, surfalb_vars, temperature_vars,                 &
             waterflux_vars, waterstate_vars, sedflux_vars,                                 &
             phosphorusstate_vars,phosphorusflux_vars,                                      &
-            ep_betr,                                                                       &
             alm_fates, glc2lnd_vars, crop_vars)
 
     end if
@@ -751,9 +749,6 @@ contains
                glc2lnd_vars%icemask_grc(bounds_clump%begg:bounds_clump%endg))
        end do
        !$OMP END PARALLEL DO
-       if(use_betr)then
-         call ep_betr%set_active(bounds_proc, col_pp)
-       endif
        ! Create new template file using cold start
        call restFile_write(bounds_proc, finidat_interp_dest,                               &
             atm2lnd_vars, aerosol_vars, canopystate_vars, cnstate_vars,                    &
@@ -763,7 +758,6 @@ contains
             soilstate_vars, solarabs_vars, surfalb_vars, temperature_vars,                 &
             waterflux_vars, waterstate_vars, sedflux_vars,                                 &
             phosphorusstate_vars,phosphorusflux_vars,                                      &
-            ep_betr,                                                                       &
             alm_fates, crop_vars)
 
        ! Interpolate finidat onto new template file
@@ -779,7 +773,6 @@ contains
             soilstate_vars, solarabs_vars, surfalb_vars, temperature_vars,                 &
             waterflux_vars, waterstate_vars, sedflux_vars,                                 &
             phosphorusstate_vars,phosphorusflux_vars,                                      &
-            ep_betr,                                                                       &
             alm_fates, glc2lnd_vars, crop_vars)
 
        ! Reset finidat to now be finidat_interp_dest 
@@ -796,9 +789,6 @@ contains
     end do
     !$OMP END PARALLEL DO
 
-    if(use_betr)then
-      call ep_betr%set_active(bounds_proc, col_pp)
-    endif 
     ! ------------------------------------------------------------------------
     ! Initialize nitrogen deposition
     ! ------------------------------------------------------------------------

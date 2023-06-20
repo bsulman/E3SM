@@ -18,7 +18,6 @@ module PhosphorusStateUpdate1Mod
   use PhosphorusFluxType     , only : phosphorusflux_type
   use PhosphorusStateType    , only : phosphorusstate_type
   use VegetationType              , only : veg_pp
-  use tracer_varcon          , only : is_active_betr_bgc
   ! bgc interface & pflotran:
   use clm_varctl             , only : use_pflotran, pf_cmode
   use clm_varctl             , only : nu_com
@@ -159,7 +158,7 @@ contains
       ! if coupled with pflotran, the following updates are NOT needed
       ! if (.not.(use_pflotran .and. pf_cmode)) then
       !------------------------------------------------------------------
-      if(.not. is_active_betr_bgc)then
+      if(.not.  .false. )then
       do j = 1, nlevdecomp
          do fc = 1,num_soilc
             c = filter_soilc(fc)
@@ -216,7 +215,7 @@ contains
             end do
          end if
       end do
-      endif ! if (.not. is_active_betr_bgc))
+      endif ! if (.not.  .false. ))
       !------------------------------------------------------------------
      
       ! forest fertilization
@@ -250,7 +249,7 @@ contains
          veg_ps%livecrootp(p)      = veg_ps%livecrootp(p)      + veg_pf%livecrootp_xfer_to_livecrootp(p)*dt
          veg_ps%livecrootp_xfer(p) = veg_ps%livecrootp_xfer(p) - veg_pf%livecrootp_xfer_to_livecrootp(p)*dt
 
-         if (woody(ivt(p)) == 1.0_r8) then
+         if (woody(ivt(p)) >= 1._r8) then
             veg_ps%livestemp(p)       = veg_ps%livestemp(p)       + veg_pf%livestemp_xfer_to_livestemp(p)*dt
             veg_ps%livestemp_xfer(p)  = veg_ps%livestemp_xfer(p)  - veg_pf%livestemp_xfer_to_livestemp(p)*dt
             veg_ps%deadstemp(p)       = veg_ps%deadstemp(p)       + veg_pf%deadstemp_xfer_to_deadstemp(p)*dt
@@ -274,7 +273,7 @@ contains
          veg_ps%retransp(p) = veg_ps%retransp(p) + veg_pf%leafp_to_retransp(p)*dt
 
          ! live wood turnover and retranslocation fluxes
-         if (woody(ivt(p)) == 1._r8) then
+         if (woody(ivt(p)) >= 1._r8) then
             veg_ps%livestemp(p)  = veg_ps%livestemp(p)  - veg_pf%livestemp_to_deadstemp(p)*dt
             veg_ps%deadstemp(p)  = veg_ps%deadstemp(p)  + veg_pf%livestemp_to_deadstemp(p)*dt
             veg_ps%livestemp(p)  = veg_ps%livestemp(p)  - veg_pf%livestemp_to_retransp(p)*dt
@@ -324,7 +323,7 @@ contains
             veg_ps%ppool(p)              = veg_ps%ppool(p)              - veg_pf%ppool_to_livecrootp_storage(p)*dt
             veg_ps%livecrootp_storage(p) = veg_ps%livecrootp_storage(p) + veg_pf%ppool_to_livecrootp_storage(p)*dt
 
-         if (woody(ivt(p)) == 1._r8) then
+         if (woody(ivt(p)) >= 1._r8) then
             veg_ps%ppool(p)              = veg_ps%ppool(p)              - veg_pf%ppool_to_livestemp(p)*dt
             veg_ps%livestemp(p)          = veg_ps%livestemp(p)          + veg_pf%ppool_to_livestemp(p)*dt
             veg_ps%ppool(p)              = veg_ps%ppool(p)              - veg_pf%ppool_to_livestemp_storage(p)*dt
@@ -358,7 +357,7 @@ contains
             veg_ps%livecrootp_storage(p) = veg_ps%livecrootp_storage(p) - veg_pf%livecrootp_storage_to_xfer(p)*dt
             veg_ps%livecrootp_xfer(p)    = veg_ps%livecrootp_xfer(p)    + veg_pf%livecrootp_storage_to_xfer(p)*dt
 
-         if (woody(ivt(p)) == 1._r8) then
+         if (woody(ivt(p)) >= 1._r8) then
             veg_ps%livestemp_storage(p)  = veg_ps%livestemp_storage(p)  - veg_pf%livestemp_storage_to_xfer(p)*dt
             veg_ps%livestemp_xfer(p)     = veg_ps%livestemp_xfer(p)     + veg_pf%livestemp_storage_to_xfer(p)*dt
             veg_ps%deadstemp_storage(p)  = veg_ps%deadstemp_storage(p)  - veg_pf%deadstemp_storage_to_xfer(p)*dt

@@ -215,6 +215,9 @@ contains
           !meteorological forcing
           if (index(metdata_type, 'qian') .gt. 0) then 
             atm2lnd_vars%metsource = 0   
+          else if (index(metdata_type,'crujra') .gt. 0) then
+            ! CRUJAR v2.3 (note: this 'else if' is ahead of next one, cru, to avoid type mis-matching
+            atm2lnd_vars%metsource = 6
           else if (index(metdata_type,'cru') .gt. 0) then
             atm2lnd_vars%metsource = 1  
           else if (index(metdata_type,'site') .gt. 0) then 
@@ -296,6 +299,9 @@ contains
             atm2lnd_vars%startyear_met      = 566 !76
             atm2lnd_vars%endyear_met_spinup = 590 !100
             atm2lnd_vars%endyear_met_trans  = 590 !100
+          else if (atm2lnd_vars%metsource == 6) then
+            ! CRUJAR v2.3
+            atm2lnd_vars%endyear_met_trans  = 2021
           end if
 
           if (use_livneh) then 
@@ -392,17 +398,24 @@ contains
                 end if
             else if (atm2lnd_vars%metsource == 4) then 
                 metdata_fname = 'GSWP3_' // trim(metvars(v)) // '_1901-2014_z' // zst(2:3) // '.nc'
-                if(index(metdata_type, 'v1') .gt. 0) &
+                if (use_daymet .and. (index(metdata_type, 'daymet4') .gt. 0)) then
+                    metdata_fname = 'GSWP3_daymet4_' // trim(metvars(v)) // '_1980-2014_z' // zst(2:3) // '.nc'
+                end if
+                if(index(metdata_type, 'v1') .gt. 0) then
                     metdata_fname = 'GSWP3_' // trim(metvars(v)) // '_1901-2010_z' // zst(2:3) // '.nc'
-
+                endif
                 if (use_livneh .and. ztoget .ge. 16 .and. ztoget .le. 20) then 
                     metdata_fname = 'GSWP3_Livneh_' // trim(metvars(v)) // '_1950-2010_z' // zst(2:3) // '.nc'                
                 else if (use_daymet .and. ztoget .ge. 16 .and. ztoget .le. 20) then 
                     metdata_fname = 'GSWP3_Daymet3_' // trim(metvars(v)) // '_1980-2010_z' // zst(2:3) // '.nc' 
                 end if
+
             else if (atm2lnd_vars%metsource == 5) then 
                     !metdata_fname = 'WCYCL1850S.ne30_' // trim(metvars(v)) // '_0076-0100_z' // zst(2:3) // '.nc'
                     metdata_fname = 'CBGC1850S.ne30_' // trim(metvars(v)) // '_0566-0590_z' // zst(2:3) // '.nc'
+            else if (atm2lnd_vars%metsource == 6) then
+              ! CRUJAR v2.3
+                metdata_fname = 'CRUJRAV2.3.c2023.0.5x0.5_' // trim(metvars(v)) // '_1901-2021_z' // zst(2:3) // '.nc'
             end if
   
             ierr = nf90_open(trim(metdata_bypass) // '/' // trim(metdata_fname), NF90_NOWRITE, met_ncids(v))
@@ -503,8 +516,12 @@ contains
               atm2lnd_vars%tindex(g,v,1) = atm2lnd_vars%timelen(v)
               if (yr .le. atm2lnd_vars%endyear_met_spinup) atm2lnd_vars%tindex(g,v,1) = atm2lnd_vars%timelen_spinup(v)
              end if
+
           end do    !end variable loop        
+
+        !
         else
+          ! met data loaded
           do v=1,met_nvars
             if (atm2lnd_vars%npf(v) - 1._r8 .gt. 1e-3) then 
               if (v .eq. 4 .or. v .eq. 5 .or. (v .ge. 8 .and. v .le. 13)) then    !rad/Precipitation
@@ -513,17 +530,20 @@ contains
                   atm2lnd_vars%tindex(g,v,2) = atm2lnd_vars%tindex(g,v,2)+1
                 end if
               else  
-                if (mod(tod/get_step_size()-1,nint(atm2lnd_vars%npf(v))) <= atm2lnd_vars%npf(v)/2._r8 .and. &
-                    mod(tod/get_step_size(),nint(atm2lnd_vars%npf(v))) > atm2lnd_vars%npf(v)/2._r8) then 
+                if ( (mod(tod/get_step_size(),nint(atm2lnd_vars%npf(v)))-atm2lnd_vars%npf(v)/2._r8) .ge. -1.e-3 .and. &
+                     (mod(tod/get_step_size()+1,nint(atm2lnd_vars%npf(v)))-atm2lnd_vars%npf(v)/2._r8) .lt. 0. ) then
                   atm2lnd_vars%tindex(g,v,1) = atm2lnd_vars%tindex(g,v,1)+1
                   atm2lnd_vars%tindex(g,v,2) = atm2lnd_vars%tindex(g,v,2)+1
                 end if
               end if
+
             else
+
               atm2lnd_vars%tindex(g,v,1) = atm2lnd_vars%tindex(g,v,1)+nint(1/atm2lnd_vars%npf(v))
               atm2lnd_vars%tindex(g,v,2) = atm2lnd_vars%tindex(g,v,2)+nint(1/atm2lnd_vars%npf(v))  
             end if
 
+            ! cycling years of data
             if (const_climate_hist .or. yr .le. atm2lnd_vars%startyear_met) then
               if (atm2lnd_vars%tindex(g,v,1) .gt. atm2lnd_vars%timelen_spinup(v)) atm2lnd_vars%tindex(g,v,1) = 1
               if (atm2lnd_vars%tindex(g,v,2) .gt. atm2lnd_vars%timelen_spinup(v)) atm2lnd_vars%tindex(g,v,2) = 1
@@ -1162,10 +1182,15 @@ contains
        ! CO2 (and C13O2) concentration: constant, prognostic, or diagnostic
        if (co2_type_idx == 0) then                    ! CO2 constant, value from namelist
          co2_ppmv_val = co2_ppmv
+#ifdef CPL_BYPASS
+       elseif (co2_type_idx /= 0) then                  ! CO2 constant, value from namelist
+         co2_ppmv_val = co2_ppmv
+#else
        else if (co2_type_idx == 1) then               ! CO2 prognostic, value from coupler field
          co2_ppmv_val = x2l(index_x2l_Sa_co2prog,i)
        else if (co2_type_idx == 2) then               ! CO2 diagnostic, value from coupler field
          co2_ppmv_val = x2l(index_x2l_Sa_co2diag,i)
+#endif
        else
          call endrun( sub//' ERROR: Invalid co2_type_idx, must be 0, 1, or 2 (constant, prognostic, or diagnostic)' )
        end if

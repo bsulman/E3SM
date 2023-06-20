@@ -48,7 +48,7 @@ contains
     ! !DESCRIPTION:
     ! On the radiation time step, set the carbon isotopic flux
     ! variables (except for gap-phase mortality and fire fluxes)
-    use tracer_varcon, only : is_active_betr_bgc  
+      
     !
     ! !ARGUMENTS:
     integer                , intent(in)    :: num_soilc       ! number of soil columns filter
@@ -384,7 +384,7 @@ contains
 
       call CNCIsoLitterToColumn(num_soilc, filter_soilc, cnstate_vars, isotopeflux_vars, isocol_cf, isoveg_cf)
 
-      if (.not. is_active_betr_bgc) then
+      if (.not.  .false. ) then
 
          ! column-level non-mortality fluxes
 
@@ -432,7 +432,7 @@ contains
     ! !DESCRIPTION:
     ! On the radiation time step, set the carbon isotopic fluxes for gap mortality
     !
-    use tracer_varcon, only : is_active_betr_bgc      
+          
     ! !ARGUMENTS:
     integer                , intent(in)    :: num_soilc       ! number of soil columns filter
     integer                , intent(in)    :: filter_soilc(:) ! filter for soil columns
@@ -724,7 +724,7 @@ contains
     !
     ! !DESCRIPTION:
     ! On the radiation time step, set the carbon isotopic fluxes for fire mortality
-    use tracer_varcon, only : is_active_betr_bgc  
+      
     !
     ! !ARGUMENTS:
     integer                , intent(in)    :: num_soilc       ! number of soil columns filter
@@ -875,7 +875,7 @@ contains
            num_soilp                                           , filter_soilp, 1._r8, 0, isotope) 
 
 
-      if (.not. is_active_betr_bgc) then
+      if (.not.  .false. ) then
 
          ! calculate the column-level flux of deadstem and deadcrootc to cwdc as the result of fire mortality.
 

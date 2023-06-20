@@ -477,7 +477,7 @@ contains
              this%livestemc_storage_patch(p) = 0._r8 
              this%livestemc_xfer_patch(p)    = 0._r8 
 
-             if (veg_vp%woody(veg_pp%itype(p)) == 1._r8) then
+             if (veg_vp%woody(veg_pp%itype(p)) >= 1._r8) then
                 this%deadstemc_patch(p) = 0.1_r8 * ratio
              else
                 this%deadstemc_patch(p) = 0._r8 
@@ -632,7 +632,6 @@ contains
 
     use restUtilMod
     use ncdio_pio
-    use tracer_varcon  , only : is_active_betr_bgc
     !
     ! !ARGUMENTS:
     class (carbonstate_type) :: this

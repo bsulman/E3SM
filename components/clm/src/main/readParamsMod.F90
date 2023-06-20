@@ -81,20 +81,17 @@ contains
     use DecompCascadeBGCMod    , only : readDecompBGCParams
     use DecompCascadeCNMod     , only : readDecompCNParams
     use PhenologyMod             , only : readPhenolParams
-    use CNPhenologyBeTRMod       , only : readCNPhenolBeTRParams
     use MaintenanceRespMod               , only : readMaintenanceRespParams
     use NitrogenDynamicsMod           , only : readNitrogenDynamicsParams
     use GapMortalityMod          , only : readGapMortParams 
-    use CNGapMortalityBeTRMod    , only : readCNGapMortBeTRParams
     use CNNitrifDenitrifMod      , only : readNitrifDenitrifParams
     use SoilLittVertTranspMod    , only : readSoilLittVertTranspParams
     use CH4Mod                   , only : readCH4Params
-    use clm_varctl               , only : paramfile, iulog, use_betr
+    use clm_varctl               , only : paramfile, iulog
     use spmdMod                  , only : masterproc
     use fileutils                , only : getfil
     use ncdio_pio                , only : ncd_pio_closefile, ncd_pio_openfile, &
                                           file_desc_t, ncd_inqdid, ncd_inqdlen
-    use tracer_varcon            , only : is_active_betr_bgc                                         
     
     !
     ! !ARGUMENTS:
@@ -118,11 +115,6 @@ contains
     call ncd_inqdid(ncid,'pft',dimid) 
     call ncd_inqdlen(ncid,dimid,npft)
     
-    if(use_betr)then
-    !  the following will be replaced with something more general. Jinyun Tang
-    !  call bgc_reaction%readParams(ncid, betrtracer_vars)   
-    endif
-
     !
     ! populate each module with private parameters
     !       
@@ -130,7 +122,7 @@ contains
     if ( (use_cn .or. use_fates) ) then
 
        call readCNAllocParams(ncid)
-       if(.not. is_active_betr_bgc) then
+       if(.not.  .false. ) then
          call readSoilLittDecompParams(ncid)
          if (use_century_decomp) then
             call readDecompBGCParams(ncid)
@@ -151,18 +143,10 @@ contains
     end if
 
     if (use_cn) then
-       if(is_active_betr_bgc)then
-         call readCNPhenolBeTRParams(ncid)
-       else
-         call readPhenolParams(ncid)
-       endif
+       call readPhenolParams(ncid)
        call readMaintenanceRespParams (ncid)
        call readNitrogenDynamicsParams (ncid)
-       if(is_active_betr_bgc)then
-         call readCNGapMortBeTRParams (ncid)
-       else
-         call readGapMortParams (ncid)
-       endif
+       call readGapMortParams (ncid)
     end if
 
     !

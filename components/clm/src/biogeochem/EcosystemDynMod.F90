@@ -48,8 +48,7 @@ module EcosystemDynMod
   use clm_varctl          , only : use_clm_interface, use_clm_bgc, use_pflotran, pf_cmode, pf_hmode
   use VerticalProfileMod   , only : decomp_vertprofiles
   use AllocationMod     , only : nu_com_nfix, nu_com_phosphatase
-  use clm_varctl          , only : nu_com, use_pheno_flux_limiter
-  use PhenologyFLuxLimitMod , only : phenology_flux_limiter, InitPhenoFluxLimiter
+  use clm_varctl          , only : nu_com
   !
   ! !PUBLIC TYPES:
   implicit none
@@ -92,9 +91,6 @@ contains
        call C14_init_BombSpike()
     end if
 
-    if(use_pheno_flux_limiter)then
-      call InitPhenoFluxLimiter()
-    endif
   end subroutine EcosystemDynInit
 
 
@@ -677,16 +673,6 @@ contains
        call t_stopf('CNUpdate0')
 
        !--------------------------------------------
-       if(use_pheno_flux_limiter)then
-         call t_startf('phenology_flux_limiter')
-         call phenology_flux_limiter(bounds, num_soilc, filter_soilc,&
-           num_soilp, filter_soilp, crop_vars, cnstate_vars,  &
-           veg_cf, veg_cs, &
-           c13_veg_cf, c13_veg_cs, &
-           c14_veg_cf, c14_veg_cs, &
-           veg_nf, veg_ns, veg_pf, veg_ps)
-         call t_stopf('phenology_flux_limiter')
-       endif
        call t_startf('CNLitterToColumn')
        call CNLitterToColumn(num_soilc, filter_soilc, &
          cnstate_vars, carbonflux_vars, nitrogenflux_vars,phosphorusflux_vars)
