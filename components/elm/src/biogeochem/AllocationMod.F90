@@ -924,7 +924,7 @@ contains
       end if
 
       ! pflotran will need an input from CN: modified 'sum_ndemand_vr' ('potential_immob' excluded).
-      if (use_elm_interface.and.use_pflotran .and. pf_cmode .or. use_alquimia) then
+      if ((use_elm_interface.and.use_pflotran .and. pf_cmode) .or. use_alquimia) then
             do j = 1, nlevdecomp
                do fc=1, num_soilc
                   c = filter_soilc(fc)
