@@ -1279,7 +1279,7 @@ end subroutine EMAlquimia_Coldstart
                 if(this%sodium_pool_number>0) lat_bc(this%sodium_pool_number) = flood_salinity_l2e(c)/.0018066_r8*0.5769_r8/22.989_r8
                 if(this%sulfide_pool_number>0) lat_bc(this%sulfide_pool_number) = flood_salinity_l2e(c)/.0018066_r8*1e-9_r8/33.1_r8
                 ! Assuming ocean water pH is 8 at salinity of 30 and freshwater pH is 6 at salinity of zero
-                if(this%Hplus_pool_number>0) lat_bc(this%Hplus_pool_number) = 10**(-(6+flood_salinity_l2e(c)*2.0/30.0))*1000.0
+                if(this%Hplus_pool_number>0) lat_bc(this%Hplus_pool_number) = 10**(-(6+flood_salinity_l2e(c)*2.0/30.0))
                 
                 if(this%NO3_pool_number>0) lat_bc(this%NO3_pool_number) = flood_nitrate_l2e(c)*1000
 
@@ -1292,9 +1292,18 @@ end subroutine EMAlquimia_Coldstart
                   endif
                   if(this%sodium_pool_number>0) surf_bc(this%sodium_pool_number) = flood_salinity_l2e(c)/.0018066_r8*0.5769_r8/22.989_r8
                   if(this%sulfide_pool_number>0) surf_bc(this%sulfide_pool_number) = flood_salinity_l2e(c)/.0018066_r8*1e-9_r8/33.1_r8
-                  if(this%Hplus_pool_number>0) lat_bc(this%Hplus_pool_number) = 10**(-(6+flood_salinity_l2e(c)*2.0/30.0))*1000.0
+                  if(this%Hplus_pool_number>0) surf_bc(this%Hplus_pool_number) = 10**(-(6+flood_salinity_l2e(c)*2.0/30.0))
                   
                   if(this%NO3_pool_number>0) surf_bc(this%NO3_pool_number) = flood_nitrate_l2e(c)*1000
+                else
+                  surf_bc(this%chloride_pool_number) = 0.0_r8
+                  if (this%sulfate_pool_number>0) then
+                    surf_bc(this%sulfate_pool_number) = 0.0_r8
+                  endif
+                  if(this%sodium_pool_number>0) surf_bc(this%sodium_pool_number) = 0.0_r8
+                  if(this%sulfide_pool_number>0) surf_bc(this%sulfide_pool_number) = 0.0_r8
+                  if(this%Hplus_pool_number>0) surf_bc(this%Hplus_pool_number) = 10**(-(6+0.0_r8*2.0/30.0))
+
                 endif
 
               endif
@@ -1703,13 +1712,13 @@ end subroutine EMAlquimia_Coldstart
           ! write(iulog,*) 'C flux = ',Cflux
           ! write(iulog,*) 'C pool diff = ',totalC_after-totalC_before
 
-          if(  abs(totalC_after + Cflux - totalC_before) < 5e-7 & ! Only do it for relatively small errors
+          if(  abs(totalC_after + Cflux - totalC_before) < 6e-7 & ! Only do it for relatively small errors
           ! .and. abs(hr_e2l(c)*dt) > abs(totalC_after + Cflux - totalC_before)*100 & ! Only if it's a small percent of Cflux
           ) then
             ! write(iulog,*) 'Adding imbalance to HR ',hr_e2l(c)*dt
             hr_e2l(c) = hr_e2l(c) - (totalC_after + Cflux - totalC_before)/dt
           else
-            ! write(iulog,*) "Alquimia: Couldn't add C imbalance to HR. HR =",hr_e2l(c)*dt,' imbalance =',totalC_after + Cflux - totalC_before
+            write(iulog,*) "Alquimia: Couldn't add C imbalance to HR. Column ",c," HR = ",hr_e2l(c)*dt,' imbalance =',totalC_after + Cflux - totalC_before
           endif
         endif
     enddo ! Column loop
@@ -2165,7 +2174,7 @@ end subroutine EMAlquimia_Coldstart
     this%chloride_pool_number = find_alquimia_pool('Cl-',name_list,this%chem_sizes%num_primary)
     this%Fe2_pool_number = find_alquimia_pool('Fe++',name_list,this%chem_sizes%num_primary)
     this%sodium_pool_number = find_alquimia_pool('Na+',name_list,this%chem_sizes%num_primary)
-    this%sulfide_pool_number = find_alquimia_pool('HS-',name_list,this%chem_sizes%num_primary)
+    this%sulfide_pool_number = find_alquimia_pool('H2S(aq)',name_list,this%chem_sizes%num_primary)
     this%CH4_pool_number = find_alquimia_pool('CH4(aq)',name_list,this%chem_sizes%num_primary)
     this%acetate_pool_number = find_alquimia_pool('Acetate-',name_list,this%chem_sizes%num_primary)
     this%N2O_pool_number = find_alquimia_pool('N2O(aq)',name_list,this%chem_sizes%num_primary)
@@ -2694,7 +2703,7 @@ subroutine run_vert_transport(this,actual_dt, total_mobile, &
       endif
       ! Eventually replace this with calculation using actual saturation/ebullition concentration
       dissolved_frac(0:nlevdecomp) = 0.1
-    elseif (lat_bc(k) > 0.0_r8) then
+    elseif (lat_bc(k) .ne. 0.0_r8) then
       dissolved_frac(0:nlevdecomp) = 1.0
     else
       dissolved_frac(0:nlevdecomp) = 0.1

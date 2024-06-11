@@ -1906,7 +1906,8 @@ contains
                 ! use original code to send water to drainage (non-h2osfc case)
                 qflx_rsub_sat(c)     = xs1(c) / dtime
              endif
-             qflx_drain_vr(c,1) = qflx_drain_vr(c,1) - xs1(c)
+             ! Not sure if it makes sense to include this in qflx_drain_vr?
+            !  qflx_drain_vr(c,1) = qflx_drain_vr(c,1) + xs1(c)
           endif
 
           if (use_vsfm) qflx_rsub_sat(c) = 0._r8

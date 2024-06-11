@@ -916,7 +916,7 @@ contains
      namelist / elm_soilhydrology_inparm / h2osfcflag, origflag
 
 
-#if (defined HUM_HOL || defined MARSH)
+#if (defined HUM_HOL)
      origflag = 1    
 #else
      origflag = 0
