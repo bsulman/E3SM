@@ -19,6 +19,10 @@ module elm_varctl
   public :: cnallocate_carbonphosphorus_only_set
   public :: cnallocate_carbonphosphorus_only
   public :: get_carbontag ! get the tag for carbon simulations
+
+  ! a temporary solution for namelist reading issues with Mac clang based gfortran compiler
+  public :: elm_ctl_set_nls
+
   !
   private
   save
@@ -610,5 +614,24 @@ contains
        ctag = 'C14'
     endif
   end function get_carbontag
+
+
+  !----------------------------------------------------------
+  ! on Mac Silicon M chips, clang based gfortran has issue to read a few namelists
+  ! for unknown reason
+  subroutine elm_ctl_set_nls(nu_com_in,           &
+                             use_dynroot_in)
+
+    ! currently 3 nls identified: nu_com, use_dynroot, use_top_solar_rad
+
+    character(len=15), optional, intent(IN) :: nu_com_in                ! nu_com
+    logical,           optional, intent(IN) :: use_dynroot_in           ! use_dynroot
+
+    !
+    if (present(nu_com_in)             ) nu_com            = nu_com_in
+    if (present(use_dynroot_in)        ) use_dynroot       = use_dynroot_in
+
+  end subroutine elm_ctl_set_nls
+
 
 end module elm_varctl
