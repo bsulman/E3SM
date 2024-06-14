@@ -17,3 +17,4 @@ string(APPEND SLIBS " -L$ENV{PNETCDF_PATH}/lib -lpnetcdf -L$ENV{HDF5_PATH}/lib -
 string(APPEND SLIBS " -L${BLASLAPACK_LIBDIR} -lblas -llapack")
 string(APPEND CXX_LIBS " -lstdc++")
 set(PIO_FILESYSTEM_HINTS "gpfs")
+set(ALQUIMIA_PATH "/ccsopen/home/b0u/ELM-alquimia/REDOX-PFLOTRAN/alquimia/build/alquimia")
