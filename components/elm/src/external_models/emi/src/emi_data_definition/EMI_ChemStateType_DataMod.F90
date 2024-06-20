@@ -108,6 +108,21 @@ contains
        dim3_end_name  =  dimname_alquimia_num_primary
        data_found   =  .true.
 
+   case(L2E_STATE_FREE_MOBILE)
+      id_val         =  L2E_STATE_FREE_MOBILE
+      name_val       =  'free mobile'
+      long_name_val  =  'free mobile: ELM to EM'
+      units_val      =  '[M]'
+      is_real_type   =  .true.
+      ndim           =  3
+      dim1_beg_name  =  dimname_begc
+      dim1_end_name  =  dimname_endc
+      dim2_beg_name  =  dimname_one
+      dim2_end_name  =  dimname_nlevsoi
+      dim3_beg_name  =  dimname_one
+      dim3_end_name  =  dimname_alquimia_num_primary
+      data_found   =  .true.
+
     case(L2E_STATE_TOTAL_IMMOBILE)
        id_val         =  L2E_STATE_TOTAL_IMMOBILE
        name_val       =  'total immobile'
@@ -360,6 +375,21 @@ contains
        id_val         =  E2L_STATE_TOTAL_MOBILE
        name_val       =  'total mobile'
        long_name_val  =  'total mobile: EM to ELM'
+       units_val      =  '[M]'
+       is_real_type   =  .true.
+       ndim           =  3
+       dim1_beg_name  =  dimname_begc
+       dim1_end_name  =  dimname_endc
+       dim2_beg_name  =  dimname_one
+       dim2_end_name  =  dimname_nlevsoi
+       dim3_beg_name  =  dimname_one
+       dim3_end_name  =  dimname_alquimia_num_primary
+       data_found   =  .true.
+
+    case(E2L_STATE_FREE_MOBILE)
+       id_val         =  E2L_STATE_FREE_MOBILE
+       name_val       =  'free mobile'
+       long_name_val  =  'free mobile: EM to ELM'
        units_val      =  '[M]'
        is_real_type   =  .true.
        ndim           =  3

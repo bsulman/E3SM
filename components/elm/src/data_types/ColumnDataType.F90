@@ -1044,6 +1044,7 @@ module ColumnDataType
      real(r8), pointer :: aqueous_pressure                (:,:)  => null()
 
      real(r8), pointer :: total_mobile                    (:,:,:) => null()
+     real(r8), pointer :: free_mobile                     (:,:,:) => null()
      real(r8), pointer :: total_immobile                  (:,:,:) => null()
      real(r8), pointer :: mineral_volume_fraction         (:,:,:) => null()
      real(r8), pointer :: mineral_specific_surface_area   (:,:,:) => null()
@@ -11344,6 +11345,7 @@ contains
       allocate(this%aqueous_pressure(begc:endc,lbj:ubj))
 
       allocate(this%total_mobile(begc:endc,lbj:ubj,1:alquimia_num_primary))
+      allocate(this%free_mobile(begc:endc,lbj:ubj,1:alquimia_num_primary))
       allocate(this%total_immobile(begc:endc,lbj:ubj,1:alquimia_num_primary))
       allocate(this%mineral_volume_fraction(begc:endc,lbj:ubj,1:alquimia_num_minerals))
       allocate(this%mineral_specific_surface_area(begc:endc,lbj:ubj,1:alquimia_num_minerals))
@@ -11460,6 +11462,15 @@ contains
        write(nc_varname,'(a,i2.2)') 'ALQUIMIA_MOBILE_',ii
        var_longname = 'Alquimia total mobile '//trim(alq_poolname)
        real2d => this%total_mobile(:,:,ii)
+
+       call restartvar(ncid=ncid, flag=flag, varname=nc_varname, xtype=ncd_double,   &
+           dim1name='column', dim2name='levgrnd', switchdim=.true., &
+           long_name=var_longname, units='mol/m^3', &
+           interpinic_flag='interp', readvar=readvar, data=real2d)
+
+       write(nc_varname,'(a,i2.2)') 'ALQUIMIA_FREE_MOBILE_',ii
+       var_longname = 'Alquimia free mobile '//trim(alq_poolname)
+       real2d => this%free_mobile(:,:,ii)
 
        call restartvar(ncid=ncid, flag=flag, varname=nc_varname, xtype=ncd_double,   &
            dim1name='column', dim2name='levgrnd', switchdim=.true., &

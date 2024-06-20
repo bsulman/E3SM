@@ -72,6 +72,7 @@ contains
          water_density                 => col_chem%water_density                 , &
          aqueous_pressure              => col_chem%aqueous_pressure              , &
          total_mobile                  => col_chem%total_mobile                  , &
+         free_mobile                   => col_chem%free_mobile                   , &
          total_immobile                => col_chem%total_immobile                , &
          mineral_volume_fraction       => col_chem%mineral_volume_fraction       , &
          mineral_specific_surface_area => col_chem%mineral_specific_surface_area , &
@@ -132,6 +133,17 @@ contains
                 do j = 1, nlevsoi
                    do k = 1, alquimia_num_primary
                       cur_data%data_real_3d(c,j,k) = total_mobile(c,j,k)
+                   enddo
+                enddo
+             enddo
+             cur_data%is_set = .true.
+
+            case (L2E_STATE_FREE_MOBILE)
+               do fc = 1, num_filter
+                  c = filter(fc)
+                  do j = 1, nlevsoi
+                     do k = 1, alquimia_num_primary
+                        cur_data%data_real_3d(c,j,k) = free_mobile(c,j,k)
                    enddo
                 enddo
              enddo
@@ -270,6 +282,7 @@ contains
          water_density                 => col_chem%water_density                 , &
          aqueous_pressure              => col_chem%aqueous_pressure              , &
          total_mobile                  => col_chem%total_mobile                  , &
+         free_mobile                   => col_chem%free_mobile                   , &
          total_immobile                => col_chem%total_immobile                , &
          mineral_volume_fraction       => col_chem%mineral_volume_fraction       , &
          mineral_specific_surface_area => col_chem%mineral_specific_surface_area , &
@@ -403,6 +416,17 @@ contains
                 do j = 1, nlevsoi
                    do k = 1, alquimia_num_primary
                       total_mobile(c,j,k) = cur_data%data_real_3d(c,j,k)
+                   enddo
+                enddo
+             enddo
+             cur_data%is_set = .true.
+
+            case (E2L_STATE_FREE_MOBILE)
+               do fc = 1, num_filter
+                  c = filter(fc)
+                  do j = 1, nlevsoi
+                     do k = 1, alquimia_num_primary
+                        free_mobile(c,j,k) = cur_data%data_real_3d(c,j,k)
                    enddo
                 enddo
              enddo
