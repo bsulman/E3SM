@@ -2853,10 +2853,10 @@ subroutine run_vert_transport(this,actual_dt, total_mobile, free_mobile, &
         ! Move excess gas up one layer
         ! What if we spread it over a larger area? Or have some fraction go directly to atmosphere depending on time step?
         if(total_mobile(j,k) < 0.0) then
-          if(abs(total_mobile(j,k))<1e-15) then
+          if(abs(total_mobile(j,k))<1e-10) then
             total_mobile(j,k) = minval
           else
-            write(iulog,*) 'Gas ',k,"layer",j,'Concentration = ',total_mobile(j,k)
+            write(iulog,*) 'Gas ',k,"layer",j,'Concentration = ',total_mobile(j,k),'Transport change = ',transport_change_rate(j,k)*actual_dt
             call endrun(msg="Gas concentration < 0 before ebullition")
           endif
         endif
