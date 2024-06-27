@@ -43,6 +43,7 @@ contains
     use lnd_disagg_forc
     use lnd_downscale_atm_forcing
     use netcdf
+    use ncdio_pio        , only: ncd_pio_openfile,ncd_pio_closefile,ncd_inqdid,ncd_inqdlen,ncd_inqvid,ncd_io,file_desc_t, var_desc_t
     !
     ! !ARGUMENTS:
     type(bounds_type)  , intent(in)    :: bounds   ! bounds
@@ -119,6 +120,10 @@ contains
     character(len=CL)  :: stream_fldFileName_popdens ! poplulation density stream filename
     character(len=CL)  :: stream_fldFileName_ndep    ! nitrogen deposition stream filename
     logical :: use_sitedata, has_zonefile, use_daymet, use_livneh
+    type(file_desc_t)  :: ncid_pio
+    type(var_desc_t)   :: vardesc
+    logical            :: dimexist,varexist,readvar
+
     data caldaym / 1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366 /    
 
     ! Constants to compute vapor pressure
@@ -1052,69 +1057,8 @@ contains
 
 
         !------------------------------------Tidal forcing--------------------------------------------------
-       if (atm2lnd_vars%loaded_bypassdata .eq. 0 ) then !.or. (mon .eq. 1 .and. day .eq. 1 .and. tod .eq. 0)) then ! Do on the first day of the year
-        if (i .eq. 1) then  ! i is grid cell index so only doing this on first grid cell of clump
-          ierr = nf90_open(trim(tide_file), nf90_nowrite, ncid)
-          if(ierr == 0) then
-            ! Should adapt some of the code above to align starting time correctly
-            ! Also need to allow tide_height to be specified by grid cell. May need elevation/HAND at topo unit level (separately)
-            ierr = nf90_inq_dimid(ncid, 'time', dimid)
-            if(ierr .ne. 0) call endrun('Error finding time variable')
-            ierr = nf90_Inquire_Dimension(ncid, dimid, len = thistimelen)
-            if(ierr .ne. 0) call endrun('Error reading time variable')
-            write(iulog,*),'Reading tide forcing file. ',trim(tide_file),' Found time dimension of length',thistimelen
-            ! if(thistimelen>876000) write(iulog,*), 'Warning: truncating tide forcing data length to 876000'
-            atm2lnd_vars%tide_forcing_len = thistimelen
-
-            ! Here we check if the forcing has more than one spatial dimension. Currently only allowing 0D or 1D spatial setup
-            ! Maybe it would make more sense to do this using pio since it could potentially be big spatial data and CPL_BYPASS seems more designed for time series
-            ierr = nf90_inq_varid(ncid, 'tide_height',varid) ! Tide height should be in m
-            if(ierr .ne. 0) call endrun('Error finding tide_height variable')
-            ierr = nf90_inquire_variable(ncid, varid, ndims=ndims,dimids=dimids)
-            if(ierr .ne. 0) call endrun('Error reading tide_height number of dimensions')
-            if(ndims>2) call endrun('Currently, tide forcing can have max 1 spatial dimension')
-            if(ndims>1) then
-              ! ierr = nf90_inq_vardimid(ncid, varid, dimids)
-              ! if(ierr .ne. 0) call endrun('Error reading tide_height dimensions')
-              ierr = nf90_Inquire_Dimension(ncid, dimids(1), len = ngrids_tide)
-              if(ierr .ne. 0) call endrun('Error reading spatial dimension')
-              write(iulog,*),'Tide forcing file has',ngrids_tide,'spatial length and model grid has',ldomain%ns,'length'
-              if(ngrids_tide .ne. ldomain%ns .and. ngrids_tide>1) call endrun('Error: Length of tide forcing grid does not match length of model grid')
-            else
-              ngrids_tide=1
-            endif
-            atm2lnd_vars%ngrids_tide = ngrids_tide
-            allocate(atm2lnd_vars%tide_height(bounds%begg:bounds%endg,atm2lnd_vars%tide_forcing_len))
-            allocate(atm2lnd_vars%tide_salinity(bounds%begg:bounds%endg,atm2lnd_vars%tide_forcing_len))
-            allocate(atm2lnd_vars%tide_nitrate(bounds%begg:bounds%endg,atm2lnd_vars%tide_forcing_len))
-            ierr = nf90_get_var(ncid, varid, atm2lnd_vars%tide_height(bounds%begg:bounds%endg,1:atm2lnd_vars%tide_forcing_len),(/bounds%begg,1/),(/bounds%endg-bounds%begg+1,atm2lnd_vars%tide_forcing_len/))
-            if(ierr .ne. 0)  then
-              write(iulog,*) 'ierr =',ierr
-              call endrun('Error reading tide_height variable')
-            endif
-            ierr = nf90_inq_varid(ncid, 'tide_salinity',varid)
-            if(ierr .ne. 0) call endrun('Error finding tide_salinity variable')
-            ierr = nf90_get_var(ncid, varid, atm2lnd_vars%tide_salinity(bounds%begg:bounds%endg,1:atm2lnd_vars%tide_forcing_len),(/bounds%begg,1/),(/bounds%endg-bounds%begg+1,atm2lnd_vars%tide_forcing_len/))
-            if(ierr .ne. 0) then 
-              write(iulog,*) 'ierr =',ierr
-              call endrun('Error reading tide_salinity variable')
-            endif
-            ierr = nf90_inq_varid(ncid, 'tide_nitrate',varid)
-            if(ierr .ne. 0) then
-              atm2lnd_vars%tide_nitrate(1,1:atm2lnd_vars%tide_forcing_len) = 0.0_r8
-              write(iulog,*) 'Error reading tide_nitrate. Setting to zero.'
-            else
-              ierr = nf90_get_var(ncid, varid, atm2lnd_vars%tide_nitrate(1,1:atm2lnd_vars%tide_forcing_len),(/1,1/),(/1,atm2lnd_vars%tide_forcing_len/))
-              if(ierr .ne. 0) then
-                atm2lnd_vars%tide_nitrate(1,1:atm2lnd_vars%tide_forcing_len) = 0.0_r8
-                write(iulog,*) 'Error reading tide_nitrate. Setting to zero.'
-              endif
-            endif
-
-            ierr = nf90_close(ncid)
-            write(iulog,*) 'Successfully read tide height, salinity from file '//trim(tide_file)
-          else
-            if(tide_file .ne. ' ') write(iulog,*) 'Did not find tide forcing file '//trim(tide_file)
+       if (atm2lnd_vars%loaded_bypassdata .eq. 0) then !.or. (mon .eq. 1 .and. day .eq. 1 .and. tod .eq. 0)) then ! Do on the first day of the year
+        if(tide_file .eq. ' ') then
             atm2lnd_vars%tide_forcing_len = 1
             ngrids_tide=ldomain%ns
             allocate(atm2lnd_vars%tide_height(ldomain%ns,atm2lnd_vars%tide_forcing_len))
@@ -1123,22 +1067,27 @@ contains
             atm2lnd_vars%tide_height(:,:) = 0.0_r8
             atm2lnd_vars%tide_salinity(:,:) = 0.0_r8
             atm2lnd_vars%tide_nitrate(:,:) = 0.0_r8
-          endif
-          ! write(iulog,*),'lnd_import_export g =',g,'tide_forcing_len =',atm2lnd_vars%tide_forcing_len,'ns =',ldomain%ns
-          ! write(iulog,*),'tide_height =',atm2lnd_vars%tide_height(g,1:10)
-        end if
-        ! if (i .eq. 1 .and. .not. masterproc) then
-        !   allocate(atm2lnd_vars%tide_height(ldomain%ns,atm2lnd_vars%tide_forcing_len))
-        !   allocate(atm2lnd_vars%tide_salinity(ldomain%ns,atm2lnd_vars%tide_forcing_len))
-        ! endif
-        ! if (i .eq. 1) then 
-        !    call mpi_bcast (atm2lnd_vars%tide_height, atm2lnd_vars%tide_forcing_len*ngrids_tide, MPI_REAL8, 0, mpicom, ier)
-        !    call mpi_bcast (atm2lnd_vars%tide_salinity, atm2lnd_vars%tide_forcing_len*ngrids_tide, MPI_REAL8, 0, mpicom, ier)
-        !   !  call mpi_bcast (atm2lnd_vars%tide_forcing_len, 1, MPI_INTEGER, 0, mpicom, ier)
-        !    !call mpi_bcast (atm2lnd_vars%tide_temp, 876000, MPI_REAL8, 0, mpicom, ier)
-        !    write(iulog,*),'lnd_import_export g =',g,'tide_forcing_len =',atm2lnd_vars%tide_forcing_len,'ns =',ldomain%ns
-        !    write(iulog,*),'tide_height =',atm2lnd_vars%tide_height(g,1:10)
-        ! end if
+        else
+          call ncd_pio_openfile (ncid_pio, trim(tide_file), 0)
+          call ncd_inqdid(ncid_pio,'time',dimid,dimexist)
+          if(.not. dimexist) call endrun('Error finding time variable')
+          call ncd_inqdlen(ncid_pio,dimid, len = thistimelen)
+          if(masterproc) write(iulog,*),'Reading tide forcing file. ',trim(tide_file),' Found time dimension of length',thistimelen
+          atm2lnd_vars%tide_forcing_len = thistimelen
+          
+          allocate(atm2lnd_vars%tide_height(ldomain%ns,atm2lnd_vars%tide_forcing_len))
+          allocate(atm2lnd_vars%tide_salinity(ldomain%ns,atm2lnd_vars%tide_forcing_len))
+          allocate(atm2lnd_vars%tide_nitrate(ldomain%ns,atm2lnd_vars%tide_forcing_len))
+          call ncd_io(ncid=ncid_pio,varname='tide_height',data=atm2lnd_vars%tide_height,flag='read',readvar=readvar)
+          if(.not. readvar) call endrun('Error reading tide_height variable')
+          call ncd_io(ncid=ncid_pio,varname='tide_nitrate',data=atm2lnd_vars%tide_nitrate,flag='read',readvar=readvar)
+          if(.not. readvar) call endrun('Error reading tide_nitrate variable')
+          call ncd_io(ncid=ncid_pio,varname='tide_salinity',data=atm2lnd_vars%tide_salinity,flag='read',readvar=readvar)
+          if(.not. readvar) call endrun('Error reading tide_salinity variable')
+
+          call ncd_pio_closefile(ncid_pio)
+
+        endif
       end if
 
        !set the topounit-level atmospheric state and flux forcings (bypass mode)
