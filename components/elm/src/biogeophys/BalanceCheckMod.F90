@@ -627,7 +627,10 @@ contains
 
              if (.not. lun_pp%urbpoi(l)) then
                 errseb(p) = sabv(p) + sabg_chk(p) + forc_lwrad(t) - eflx_lwrad_out(p) &
-                     - eflx_sh_tot(p) - eflx_lh_tot(p) - eflx_soil_grnd(p) + eflx_sh_tide(c) !SL added eflx_sh_tide 5-5-22
+                     - eflx_sh_tot(p) - eflx_lh_tot(p) - eflx_soil_grnd(p)
+#if (defined HUM_HOL || defined MARSH || defined COL3RD)
+                errseb(p) = errseb(p) + eflx_sh_tide(c) !SL added eflx_sh_tide 5-5-22
+#endif
              else
                 errseb(p) = sabv(p) + sabg(p) &
                      - eflx_lwrad_net(p) &
