@@ -2681,6 +2681,23 @@ contains
             dim1name='column', long_name='', units='', &
             interpinic_flag='interp', readvar=readvar, data=this%prod1c)
 
+       if (use_alquimia) then
+         call restartvar(ncid=ncid, flag=flag, varname='DIC_vr', xtype=ncd_double,  &
+               dim1name='column', dim2name='levgrnd', switchdim=.true., &
+               long_name='',  units='', fill_value=0.0_r8, &
+               interpinic_flag='interp', readvar=readvar, data=this%DIC_vr)
+
+         call restartvar(ncid=ncid, flag=flag, varname='DOC_vr', xtype=ncd_double,  &
+               dim1name='column', dim2name='levgrnd', switchdim=.true., &
+               long_name='',  units='', fill_value=0.0_r8, &
+               interpinic_flag='interp', readvar=readvar, data=this%DOC_vr)
+
+         call restartvar(ncid=ncid, flag=flag, varname='SIC_vr', xtype=ncd_double,  &
+               dim1name='column', dim2name='levgrnd', switchdim=.true., &
+               long_name='',  units='', fill_value=0.0_r8, &
+               interpinic_flag='interp', readvar=readvar, data=this%SIC_vr)
+       endif
+
     end if ! C12
 
     if ( carbon_type == 'c13' ) then
@@ -3210,7 +3227,7 @@ contains
             this%totSIC(c) + &
             this%ctrunc(c)   + &
             this%cropseedc_deficit(c)
-
+      write(iulog,*),this%totcolc(c),this%totDIC(c),this%totDOC(c)
        this%totabgc(c) =       &
             this%totprodc(c) + &
             this%seedc(c)    + &

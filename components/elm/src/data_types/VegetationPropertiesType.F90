@@ -161,7 +161,7 @@ module VegetationPropertiesType
 
      real(r8), allocatable :: waterlevel_threshold(:)       !Threshold for water level effects (mm above soil surface)
      real(r8), allocatable :: waterlevel_opt(:)             !Water level at which optimal biomass occurs (mm)
-     real(r8), allocatable :: waterlevel_tol(:)             !Water level tolerance; width parameter for Gaussian distribution (mm -1)
+     real(r8), allocatable :: waterlevel_tol(:)             !Water level tolerance; width parameter for Gaussian distribution (mm)
 
    contains
    procedure, public :: Init => veg_vp_init
