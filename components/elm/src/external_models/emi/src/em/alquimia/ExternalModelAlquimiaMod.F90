@@ -2449,10 +2449,6 @@ end subroutine EMAlquimia_Coldstart
   call run_vert_transport(this,actual_dt/2, total_mobile, free_mobile, &
                           porosity(:),temperature(:),volume(:),saturation(:),liq_frac(:),&
                           adv_flux(:),lat_flow(:),lat_bc,lat_flux_step,surf_bc,surf_flux_step,transport_change_rate)
-  if(any(total_mobile(1:nlevdecomp,this%NO3_pool_number)<0.0)) then
-    write(iulog,*),'NO3 Before (1st half step): ',total_mobile(1:nlevdecomp,this%NO3_pool_number)- transport_change_rate(1:nlevdecomp,this%NO3_pool_number)*actual_dt
-    write(iulog,*),'NO3 after: ',total_mobile(1:nlevdecomp,this%NO3_pool_number)
-  endif
   do j=1,nlevdecomp
 
     ! Update properties from ELM
@@ -2632,9 +2628,6 @@ end subroutine EMAlquimia_Coldstart
     surf_flux = surf_flux + surf_flux_step
     lat_flux  = lat_flux  + lat_flux_step
       
-    if(any(total_mobile(1:nlevdecomp,this%NO3_pool_number)<0.0)) then
-      write(iulog,*),'NO3 Before (2nd half step): ',total_mobile(1:nlevdecomp,this%NO3_pool_number)- transport_change_rate(1:nlevdecomp,this%NO3_pool_number)*actual_dt
-     endif
 
     ! Second half of transport (Strang splitting)
     ! This is only done if we converged at this time step for all layers
@@ -2642,12 +2635,6 @@ end subroutine EMAlquimia_Coldstart
                             porosity,temperature,volume,saturation,liq_frac,&
                             adv_flux,lat_flow,lat_bc,lat_flux_step,surf_bc,surf_flux_step,transport_change_rate)
 
-    if(any(total_mobile(1:nlevdecomp,this%NO3_pool_number)<0.0)) then
-      write(iulog,*),'NO3 Before (2nd half step): ',total_mobile(1:nlevdecomp,this%NO3_pool_number)- transport_change_rate(1:nlevdecomp,this%NO3_pool_number)*actual_dt
-      write(iulog,*),'NO3 after: ',total_mobile(1:nlevdecomp,this%NO3_pool_number)
-      write(iulog,*),'transport_change',transport_change_rate(1:nlevdecomp,this%NO3_pool_number)*actual_dt
-      write(iulog,*),'surf_bc',surf_bc(this%NO3_pool_number),'lat_bc',lat_bc(this%NO3_pool_number),lat_flux_step(this%NO3_pool_number),surf_flux_step(this%NO3_pool_number)
-    endif
     surf_flux = surf_flux + surf_flux_step
     lat_flux  = lat_flux  + lat_flux_step
   endif ! if converged
@@ -2853,12 +2840,7 @@ subroutine run_vert_transport(this,actual_dt, total_mobile, free_mobile, &
         ! Move excess gas up one layer
         ! What if we spread it over a larger area? Or have some fraction go directly to atmosphere depending on time step?
         if(total_mobile(j,k) < 0.0) then
-          if(abs(total_mobile(j,k))<1e-10) then
-            total_mobile(j,k) = minval
-          else
-            write(iulog,*) 'Gas ',k,"layer",j,'Concentration = ',total_mobile(j,k),'Transport change = ',transport_change_rate(j,k)*actual_dt
-            call endrun(msg="Gas concentration < 0 before ebullition")
-          endif
+          ebul_flux=0.0
         endif
         ebul_flux=min(ebul_flux,total_mobile(j,k)*0.9_r8)
         if(ebul_flux>0.0_r8) then
