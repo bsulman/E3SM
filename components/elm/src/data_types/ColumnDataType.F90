@@ -3757,6 +3757,23 @@ contains
        call endrun(msg= 'ERROR:: smin_nh4_vr'//' is required on an initialization dataset' )
     end if
 
+    if (use_alquimia) then
+      call restartvar(ncid=ncid, flag=flag, varname='N2O_vr', xtype=ncd_double,  &
+            dim1name='column', dim2name='levgrnd', switchdim=.true., &
+            long_name='',  units='', fill_value=0.0_r8, &
+            interpinic_flag='interp', readvar=readvar, data=this%N2O_vr)
+
+      call restartvar(ncid=ncid, flag=flag, varname='DON_vr', xtype=ncd_double,  &
+            dim1name='column', dim2name='levgrnd', switchdim=.true., &
+            long_name='',  units='', fill_value=0.0_r8, &
+            interpinic_flag='interp', readvar=readvar, data=this%DON_vr)
+
+      call restartvar(ncid=ncid, flag=flag, varname='N2_vr', xtype=ncd_double,  &
+            dim1name='column', dim2name='levgrnd', switchdim=.true., &
+            long_name='',  units='', fill_value=0.0_r8, &
+            interpinic_flag='interp', readvar=readvar, data=this%N2_vr)
+    endif
+
     ! pflotran: smin_nh4sorb
     if (use_pflotran .and. pf_cmode) then
        if (use_vertsoilc) then
