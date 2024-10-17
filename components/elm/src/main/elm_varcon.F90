@@ -62,7 +62,7 @@ module elm_varcon
   real(r8) :: tkair  = 0.023_r8                             ! thermal conductivity of air   [W/m/K]
   real(r8) :: tkice  = 2.290_r8                             ! thermal conductivity of ice   [W/m/K]
   real(r8) :: tkwat  = 0.57_r8                              ! thermal conductivity of water [W/m/K]
-#if (defined MARSH || COL3RD)
+#if (defined MARSH || COL3RD || COL4RD)
   real(r8), parameter :: tfrz   = 271 !SHR_CONST_TKFRZ      ! freezing temperature [K] for saltwater TAO
 #else
   real(r8), parameter :: tfrz   = SHR_CONST_TKFRZ                       ! freezing temperature [K]

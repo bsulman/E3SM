@@ -1087,7 +1087,7 @@ contains
     call ncd_io('qflx_h2osfc_surfrate', qflx_h2osfc_surfrate, 'read', ncid, readvar=readv, posNOTonfile=.true.)
     if ( .not. readv) qflx_h2osfc_surfrate = 1.0e-7_r8
 
-#if (defined MARSH || defined COL3RD)
+#if (defined MARSH || defined COL3RD || defined COL4TH)
 ! Tidal cycle parameters
     ! Defaults from Teri's hard coded numbers
     ! Multiple parameters specified in params file like tide_coeff_amp_1, tide_coeff_amp_2, ...

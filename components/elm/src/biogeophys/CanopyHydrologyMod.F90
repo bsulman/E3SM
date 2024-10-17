@@ -845,7 +845,7 @@ contains
                 frac_h2osfc(c) = 0.99_r8
 #endif
 
-#if (defined MARSH || defined COL3RD)
+#if (defined MARSH || defined COL3RD || defined COL4TH)
                 frac_h2osfc(c) = 0.99_r8
 #endif
              else

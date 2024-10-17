@@ -540,7 +540,7 @@ contains
            bbb(p) = max (bbbopt(p)*btran(p), 1._r8)
            mbb(p) = mbbopt(p)
          end if
-#elseif (defined MARSH || defined COL3RD)
+#elseif (defined MARSH || defined COL3RD || defined COL4TH)
          !salinity(c) = 30.0_r8
          !if (salinity(c) > sal_threshold(p)) then
          !   btran(p) = (btran(p)*(1-salinity(c)/(KM_salinity(p)+salinity(c))))
