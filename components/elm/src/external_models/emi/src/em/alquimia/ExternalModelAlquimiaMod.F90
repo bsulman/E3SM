@@ -1232,6 +1232,7 @@ end subroutine EMAlquimia_Coldstart
 
              ! Prevent negative values of h2o_liqvol
              h2o_liqvol(c,j) = max(h2o_liqvol(c,j),0.0001_r8)
+             h2o_liqvol(c,j) = min(h2o_liqvol(c,j),1.0_r8)
 
              if(h2o_liqvol(c,j)+h2o_icevol(c,j)>0) then
               liq_frac(j) = h2o_liqvol(c,j)/(h2o_liqvol(c,j)+h2o_icevol(c,j))
@@ -1245,6 +1246,12 @@ end subroutine EMAlquimia_Coldstart
              enddo
 
           enddo ! End of layer loop setting things up
+          if(any(isnan(liq_frac))) then
+            write(iulog,*),__LINE__,j,'liq_frac',liq_frac
+            write(iulog,*),h2o_liqvol(c,:)
+            write(iulog,*),h2o_icevol(c,:)
+            call endrun(msg='liq_frac is NaN')
+           endif
           ! do poolnum=1,ndecomp_pools
           !   write(iulog,*),'Soil N pools before',poolnum,sum(soilnitrogen_l2e(c,:,poolnum)*dz(c,:))
           ! enddo
@@ -2528,38 +2535,38 @@ end subroutine EMAlquimia_Coldstart
     endif
     enddo ! Layer loop
 
-
-    if(actual_dt<=60.0_r8) then
-      ! write(iulog,*),'Alquimia: Time step cut to 60 s. Attempting to solve by pausing transport and solving layer by layer'
-      do j=1,nlevdecomp
-            ! Update properties from ELM
-        this%chem_state%porosity =    porosity(j)
-        this%chem_state%temperature = temperature(j) - 273.15
-        this%chem_properties%volume = volume(j)
-        this%chem_properties%saturation = sat(j) ! Set minimum saturation to stop concentrations from blowing up at low soil moisture
-        call this%copy_ELM_to_Alquimia(j,water_density,&
-                                          aqueous_pressure,&
-                                          total_mobile,&
-                                          total_immobile,&
-                                          mineral_volume_fraction,&
-                                          mineral_specific_surface_area,&
-                                          surface_site_density,&
-                                          cation_exchange_capacity,&
-                                          aux_doubles,&
-                                          aux_ints) 
-        call run_onestep(this,dt,num_cuts,ncuts)
-        call this%copy_Alquimia_to_ELM(j,water_density_tmp,&
-                                        aqueous_pressure_tmp,&
-                                        total_mobile_tmp,free_mobile_tmp,&
-                                        total_immobile_tmp,&
-                                        mineral_volume_fraction_tmp,&
-                                        mineral_specific_surface_area_tmp,&
-                                        surface_site_density_tmp,&
-                                        cation_exchange_capacity_tmp,&
-                                        aux_doubles_tmp,&
-                                        aux_ints_tmp)
-      enddo
-    endif
+    ! I don't think this is in the right place
+    ! if(actual_dt<=60.0_r8) then
+    !   ! write(iulog,*),'Alquimia: Time step cut to 60 s. Attempting to solve by pausing transport and solving layer by layer'
+    !   do j=1,nlevdecomp
+    !         ! Update properties from ELM
+    !     this%chem_state%porosity =    porosity(j)
+    !     this%chem_state%temperature = temperature(j) - 273.15
+    !     this%chem_properties%volume = volume(j)
+    !     this%chem_properties%saturation = sat(j) ! Set minimum saturation to stop concentrations from blowing up at low soil moisture
+    !     call this%copy_ELM_to_Alquimia(j,water_density,&
+    !                                       aqueous_pressure,&
+    !                                       total_mobile,&
+    !                                       total_immobile,&
+    !                                       mineral_volume_fraction,&
+    !                                       mineral_specific_surface_area,&
+    !                                       surface_site_density,&
+    !                                       cation_exchange_capacity,&
+    !                                       aux_doubles,&
+    !                                       aux_ints) 
+    !     call run_onestep(this,dt,num_cuts,ncuts)
+    !     call this%copy_Alquimia_to_ELM(j,water_density_tmp,&
+    !                                     aqueous_pressure_tmp,&
+    !                                     total_mobile_tmp,free_mobile_tmp,&
+    !                                     total_immobile_tmp,&
+    !                                     mineral_volume_fraction_tmp,&
+    !                                     mineral_specific_surface_area_tmp,&
+    !                                     surface_site_density_tmp,&
+    !                                     cation_exchange_capacity_tmp,&
+    !                                     aux_doubles_tmp,&
+    !                                     aux_ints_tmp)
+    !   enddo
+    ! endif
 
     if(.not. this%chem_status%converged) then
         ! If we are not at minimum timestep yet, cut and keep going
@@ -2673,6 +2680,8 @@ subroutine run_vert_transport(this,actual_dt, total_mobile, free_mobile, &
 
   real(r8), parameter   :: minval = 1.e-35_r8
 
+  ebul_atmo_frac=0.5 ! Fraction of ebullition that goes directly to atmosphere instead of next layer up
+
   do j=1,nlevdecomp
   sat(j) = min(max(saturation(j),0.01),1.0)
   enddo
@@ -2750,7 +2759,7 @@ subroutine run_vert_transport(this,actual_dt, total_mobile, free_mobile, &
 
     do j=1,nlevdecomp
       if(isnan(total_mobile(j,k))) then
-        write(iulog,*),__LINE__,'Chem spec',k,total_mobile(:,k)
+        write(iulog,*),__LINE__,'Chem spec',k,'layer',j,total_mobile(:,k)
         call endrun(msg="Mobile species is NaN")
       endif
       ! Assume diffusion through water according to Wright (1990)
@@ -2822,7 +2831,6 @@ subroutine run_vert_transport(this,actual_dt, total_mobile, free_mobile, &
 
   ! ! Ebullition flux, from the bottom up until reaching unsaturated layer
     if(this%is_dissolved_gas(k)) then
-      ebul_atmo_frac=0.1 ! Fraction of ebullition that goes directly to atmosphere instead of next layer up
       do j=nlevdecomp,3,-1
         if(sat(j)<0.9 .or. liq_frac(j)<0.95) exit
         ! Calculate total water pressure. Using calculation from Jiaze
