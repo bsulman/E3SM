@@ -1035,7 +1035,7 @@ contains
     end if
 
     ! Through alquimia, equilibrate initial conditions and initialize data structure
-    if (use_alquimia .and. finidat == ' ') then
+    if (use_alquimia .and. finidat == ' ' .and. .not.is_restart()) then
       !$OMP PARALLEL DO PRIVATE (nc, bounds_clump)
       do nc = 1,nclumps
          call get_clump_bounds(nc, bounds_clump)

@@ -321,6 +321,8 @@ contains
                write(iulog,*)'DOC_runoff            = ',col_cf%DOC_runoff(c)*dt
                write(iulog,*)'CH4 flux              = ',col_cf%ch4flux(c)*dt
                write(iulog,*)'SIC (carbonates)      = ',col_cs%totSIC(c) 
+               write(iulog,*)'DOC                   = ',col_cs%totDOC(c)
+               write(iulog,*)'DIC                   = ',col_cs%totDIC(c) 
             endif
 
             call endrun(msg=errMsg(__FILE__, __LINE__))
