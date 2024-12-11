@@ -866,6 +866,7 @@ contains
 #endif
 
 #if (defined COL3RD)
+             write(iulog,*), 'SoilHydro -> col3rd_num_hydrologyc = ', num_hydrologyc ! ====================================> JAPG's Line code 
              if(num_hydrologyc .ne. 3) call endrun(msg="Error: Must have 3 columns if COL3RD is defined")
              !compute lateral flux in aquifer
              if (jwt(c) .lt. nlevbed) then
@@ -1026,7 +1027,8 @@ contains
 
 
 #if (defined COL4TH)
-             if(num_hydrologyc .ne. 3) call endrun(msg="Error: Must have 3 columns if COL3RD is defined")
+             write(iulog,*), 'SoilHydro -> num_hydrologyc = ', num_hydrologyc ! ====================================> JAPG's Line code 
+             if(num_hydrologyc .ne. 3) call endrun(msg="Error: Must have 4 columns if COL4TH is defined")
              !compute lateral flux in aquifer
              if (jwt(c) .lt. nlevbed) then
                 do j=nlevbed,jwt(c)+1,-1
@@ -1092,7 +1094,7 @@ contains
                endif
                ! bsulman : Changed to use flexible set of parameters up to full NOAA tidal components (37 coefficients)
                ! Tidal cycle is the sum of all the sinusoidal components
-#ifdef COL3RD
+#ifdef COL4TH
                call get_curr_time(days, seconds)
                h2osfc_tide = 0.0_r8
                if(tide_file .ne. ' ') then
