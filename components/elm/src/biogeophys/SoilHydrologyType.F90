@@ -564,7 +564,7 @@ contains
             this%h2osfc_thresh_col(c) = 0._r8     !changed from 0 to 1 TAO 29/8/2018
          endif
 
-#if (defined MARSH || defined COL3RD)
+#if (defined MARSH || defined COL3RD || defined COL4TH)
             this%h2osfc_thresh_col(c) = 2.e3_r8    ! set to zero for no h2osfc (w/frac_infclust =large) changed from 0 to 1 TAO 29/8/2018
 #endif
 
@@ -873,7 +873,7 @@ contains
      namelist / elm_soilhydrology_inparm / h2osfcflag, origflag
 
 
-#if (defined HUM_HOL || defined MARSH || defined COL3RD)
+#if (defined HUM_HOL || defined MARSH || defined COL3RD || defined COL4TH)
      origflag = 1    
 #else
      origflag = 0

@@ -442,7 +442,7 @@ contains
              write(iulog,*)'qflx_glcice_melt           = ',qflx_glcice_melt(indexc)
              write(iulog,*)'qflx_glcice_frz            = ',qflx_glcice_frz(indexc)
              write(iulog,*)'qflx_lateral               = ',qflx_lateral(indexc)
-#if (defined HUM_HOL || defined MARSH || defined COL3RD)
+#if (defined HUM_HOL || defined MARSH || defined COL3RD || defined COL4TH)
              write(iulog,*)'qflx_lat_aqu               = ',qflx_lat_aqu(indexc)
              write(iulog,*)'qflx_tide                  = ',qflx_tide(indexc)
              write(iulog,*)'qflx_surf_input            = ',qflx_surf_input(indexc)
