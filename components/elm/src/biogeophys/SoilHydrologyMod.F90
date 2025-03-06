@@ -58,7 +58,7 @@ contains
     use pftvarcon       , only : humhol_ht_frac
 #endif
 #if (defined COL4TH)
-    use pftvarcon       , only : humhol_ht_frac !JAPG: I should defined new variables here
+    use pftvarcon       , only : humhol_ht_frac ! ====================================================================>  japg: I should defined new variables here
 #endif
     use SoilWaterMovementMod, only : zengdecker_2009_with_var_soil_thick
     !

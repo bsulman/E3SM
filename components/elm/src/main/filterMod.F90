@@ -391,16 +391,16 @@ contains
     do c = bounds%begc,bounds%endc
        t =col_pp%topounit(c)
        if (top_pp%active(t)) then
-          write(iulog,*),'loop_1 = ', c ! ======================================================> JAPG's Line code 
+          write(iulog,*),'loop_1 = ', c ! ==========================================================> japg [02-25-2025] 
           if (col_pp%active(c) .or. include_inactive) then
              l =col_pp%landunit(c)
-             write(iulog,*),'loop_2 = ', c ! ======================================================> JAPG's Line code 
+             write(iulog,*),'loop_2 = ', c ! ======================================================> japg [02-25-2025] 
              if (lun_pp%itype(l) == istsoil .or. col_pp%itype(c) == icol_road_perv .or. &
                   lun_pp%itype(l) == istcrop) then
                 f = f + 1
                 this_filter(nc)%hydrologyc(f) = c
-                write(iulog,*), 'num_hydrology_count', f ! =================================> JAPG's Line code
-                write(iulog,*),'loop_3 = ', c ! ======================================================> JAPG's Line code 
+                write(iulog,*), 'num_hydrology_count', f ! ===========================================> japg [02-25-2025]
+                write(iulog,*),'loop_3 = ', c ! ======================================================> japg [02-25-2025]
 
                 if (col_pp%itype(c) == icol_road_perv) then
                    fn = fn + 1
@@ -412,7 +412,7 @@ contains
        end if
     end do
     this_filter(nc)%num_hydrologyc = f
-    write(iulog,*), 'f_end=', f ! ============================================> JAPG's Line code 
+    write(iulog,*), 'f_end=', f ! ============================================> japg [02-25-2025] 
     this_filter(nc)%num_hydrononsoic = fn
 
     ! Create prognostic crop and soil w/o prog. crop filters at pft-level

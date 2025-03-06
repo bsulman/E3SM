@@ -235,6 +235,8 @@ contains
     type(bounds_type)    :: bounds_proc
     !-----------------------------------------------------------------------
 
+
+    write(iulog,*)'japg1 =========================================================> elm_driver.F90  '
     call get_curr_time_string(dateTimeString)
     if (masterproc) then
        write(iulog,*)'Beginning timestep   : ',trim(dateTimeString)
