@@ -232,7 +232,10 @@ contains
           !meteorological forcing
           if (index(metdata_type, 'qian') .gt. 0) then 
             atm2lnd_vars%metsource = 0   
-          else if (index(metdata_type,'cru') .gt. 0) then
+          else if (index(metdata_type,'jra') .gt. 0 .and. index(metdata_type,'cru') .gt. 0) then
+            ! CRUJRA v2.3 or CRUJRA trendy (note: this 'else if' is ahead of next one, cru, to avoid type mis-matching
+            atm2lnd_vars%metsource = 6
+          else if (index(metdata_type,'cru') .gt. 0 .and. index(metdata_type,'jra') .le. 0) then
             atm2lnd_vars%metsource = 1  
           else if (index(metdata_type,'site') .gt. 0) then 
             atm2lnd_vars%metsource = 2
@@ -242,6 +245,8 @@ contains
             atm2lnd_vars%metsource = 4
           else if (index(metdata_type,'cpl') .gt. 0) then 
             atm2lnd_vars%metsource = 5
+          else if (index(metdata_type,'era5') .gt. 0) then
+            atm2lnd_vars%metsource = 7
           else
             call endrun( sub//' ERROR: Invalid met data source for cpl_bypass' )
           end if
@@ -310,9 +315,15 @@ contains
             atm2lnd_vars%endyear_met_trans  = 2014
             if(index(metdata_type, 'v1') .gt. 0) atm2lnd_vars%endyear_met_trans  = 2010
           else if (atm2lnd_vars%metsource == 5) then
-            atm2lnd_vars%startyear_met      = 566 !76
-            atm2lnd_vars%endyear_met_spinup = 590 !100
-            atm2lnd_vars%endyear_met_trans  = 590 !100
+            atm2lnd_vars%startyear_met      = 566
+            atm2lnd_vars%endyear_met_spinup = 590
+            atm2lnd_vars%endyear_met_trans  = 590
+          else if (atm2lnd_vars%metsource == 6) then
+            ! CRUJAR v2.3
+            atm2lnd_vars%endyear_met_trans  = 2021
+          else if (atm2lnd_vars%metsource == 7) then
+            ! ERA5
+            atm2lnd_vars%endyear_met_trans  = 2023
           end if
 
           if (use_livneh) then 
@@ -423,6 +434,17 @@ contains
             else if (atm2lnd_vars%metsource == 5) then 
                     !metdata_fname = 'WCYCL1850S.ne30_' // trim(metvars(v)) // '_0076-0100_z' // zst(2:3) // '.nc'
                     metdata_fname = 'CBGC1850S.ne30_' // trim(metvars(v)) // '_0566-0590_z' // zst(2:3) // '.nc'
+            else if (atm2lnd_vars%metsource == 6) then
+                ! CRUJRA v2.3
+                metdata_fname = 'CRUJRAV2.3.c2023.0.5x0.5_' // trim(metvars(v)) // '_1901-2021_z' // zst(2:3) // '.nc'
+            else if (atm2lnd_vars%metsource == 7) then
+                ! ERA5
+                if (use_daymet .and. (index(metdata_type, 'daymet4') .gt. 0) ) then
+                   !daymet v4 with ERA5 v2023 for NA with user-defined zone-mappings.txt
+                    metdata_fname = 'Daymet_ERA5.1km_' // trim(metvars(v)) // '_1980-2023_z' // zst(2:3) // '.nc'
+                else
+                    metdata_fname = 'era5.25d_' // trim(metvars(v)) // '_1949-2023_z' // zst(2:3) // '.nc'
+                end if
             end if
   
             ierr = nf90_open(trim(metdata_bypass) // '/' // trim(metdata_fname), NF90_NOWRITE, met_ncids(v))
