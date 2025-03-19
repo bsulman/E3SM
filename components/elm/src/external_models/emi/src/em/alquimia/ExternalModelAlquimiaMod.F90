@@ -2680,7 +2680,7 @@ subroutine run_vert_transport(this,actual_dt, total_mobile, free_mobile, &
 
   real(r8), parameter   :: minval = 1.e-35_r8
 
-  ebul_atmo_frac=0.5 ! Fraction of ebullition that goes directly to atmosphere instead of next layer up
+  ebul_atmo_frac=0.0 ! Fraction of ebullition that goes directly to atmosphere instead of next layer up
 
   do j=1,nlevdecomp
   sat(j) = min(max(saturation(j),0.01),1.0)
@@ -2708,12 +2708,18 @@ subroutine run_vert_transport(this,actual_dt, total_mobile, free_mobile, &
         diffus(j) = 2.0e-5_r8*0.66_r8*porosity(j)*(1.0_r8-sat(j))*(1-sat(j))**3
       enddo
 
+      water_pressure = 101.325e3_r8 ! Should take H2OSFC into account also, and ideally use actual atmospheric pressure
       total_resist = 0.0_r8
       do j=1,nlevdecomp
+        water_pressure = water_pressure + porosity(j)*sat(j)*dzsoi_decomp(j)*grav*denh2o
         if(free_mobile(j,k) > 0.0_r8) then
           gas_pressure = free_mobile(j,k)/porosity(j)/(this%Henry_const(k)*exp(-this%Henry_Tdep(k)*(1/temperature(j)-1/298.15)))
         else
           gas_pressure = total_mobile(j,k)/porosity(j)/(this%Henry_const(k)*exp(-this%Henry_Tdep(k)*(1/temperature(j)-1/298.15)))
+        endif
+        ! Approximate ebullition by increasing diffusion coefficient when gas pressure is higher than water pressure
+        if(gas_pressure>water_pressure .and. sat(j)>0.75) then
+          diffus(j) = max(diffus(j),2.0e-5_r8*0.66_r8*porosity(j)*((gas_pressure-water_pressure)/gas_pressure)*((gas_pressure-water_pressure)/gas_pressure)**3)
         endif
         atmo_pressure = 101.325e3_r8 ! Pa
         ! Henry constant mol/(m3*Pa)
@@ -2818,11 +2824,11 @@ subroutine run_vert_transport(this,actual_dt, total_mobile, free_mobile, &
 
     ! Save surface equil in transport_change_rate in case it needs to be undone after failed alquimia solve
     ! This is done after applying transport_change_rate to total_mobile so it's not double counted
-    transport_change_rate(1:nlevdecomp,k) = transport_change_rate(1:nlevdecomp,k) !+ surf_equil_step(1:nlevdecomp,k)/actual_dt/dzsoi_decomp(1:nlevdecomp)
+    ! transport_change_rate(1:nlevdecomp,k) = transport_change_rate(1:nlevdecomp,k) !+ surf_equil_step(1:nlevdecomp,k)/actual_dt/dzsoi_decomp(1:nlevdecomp)
 
   ! ! Ebullition flux, from the bottom up until reaching unsaturated layer
     if(this%is_dissolved_gas(k)) then
-      do j=nlevdecomp,3,-1
+      do j=nlevdecomp,2,-1
         if(sat(j)<0.9 .or. liq_frac(j)<0.95) exit
         ! Calculate total water pressure. Using calculation from Jiaze
         water_pressure = 101.325e3_r8 ! Should take H2OSFC into account also, and ideally use actual atmospheric pressure
@@ -2835,23 +2841,28 @@ subroutine run_vert_transport(this,actual_dt, total_mobile, free_mobile, &
         else
           gas_pressure = total_mobile(j,k)/porosity(j)/(this%Henry_const(k)*exp(-this%Henry_Tdep(k)*(1/temperature(j)-1/298.15)))
         endif
-        ebul_flux = free_mobile(j,k)*max((gas_pressure-water_pressure)/gas_pressure,0.0) ! mol/m3
+        ! This is problematic in the loop because free_mobile isn't getting updated with transport changes
+        ! One way to get around this would be to send it to the first unsaturated layer instead of next layer up
+        ebul_flux = free_mobile(j,k)*max((gas_pressure-water_pressure)/gas_pressure,0.0)/3600_r8 ! mol/m3
         ! Move excess gas up one layer
         ! What if we spread it over a larger area? Or have some fraction go directly to atmosphere depending on time step?
         if(total_mobile(j,k) < 0.0) then
           ebul_flux=0.0
         endif
-        ebul_flux=min(ebul_flux,total_mobile(j,k)*0.9_r8)
+        ebul_flux=min(ebul_flux,total_mobile(j,k)*0.9_r8/3600_r8)*0.0
         if(ebul_flux>0.0_r8) then
+          if(ebul_flux>total_mobile(j,k)*0.5/3600.0) write(iulog,*) 'Ebullition: ',j,k,water_pressure,gas_pressure,free_mobile(j,k),total_mobile(j,k),ebul_flux*3600
           ! ebul_flux is in mol/m3, so transfering to a different layer requires correcting for difference in layer thickness so it's in mols
           ! transport_change_rate is in mol/m3/s so ebul_flux needs to be divided by time step length 
           ! write(iulog,*),'Ebullition: ',j,k,gas_pressure,water_pressure,ebul_flux,total_mobile(c,j,k),temperature(c,j),this%Henry_const(k),this%Henry_Tdep(k)
-          total_mobile(j,k) = total_mobile(j,k) - ebul_flux
-          total_mobile(j-1,k) = total_mobile(j-1,k) + ebul_flux*(dzsoi_decomp(j))/(dzsoi_decomp(j-1))*(1-ebul_atmo_frac)
-          surf_equil_step(1,k) = surf_equil_step(1,k) - ebul_flux*ebul_atmo_frac*dzsoi_decomp(j)
-          transport_change_rate(j,k) = transport_change_rate(j,k) - ebul_flux/actual_dt
+          total_mobile(j,k) = total_mobile(j,k) - ebul_flux*actual_dt
+          total_mobile(j-1,k) = total_mobile(j-1,k) + ebul_flux*actual_dt*(dzsoi_decomp(j))/(dzsoi_decomp(j-1))*(1-ebul_atmo_frac)
+          free_mobile(j,k) = free_mobile(j,k) - ebul_flux*actual_dt
+          free_mobile(j-1,k) = free_mobile(j-1,k) + ebul_flux*actual_dt*(dzsoi_decomp(j))/(dzsoi_decomp(j-1))*(1-ebul_atmo_frac)
+          surf_equil_step(1,k) = surf_equil_step(1,k) - ebul_flux*actual_dt*ebul_atmo_frac*dzsoi_decomp(j)
+          transport_change_rate(j,k) = transport_change_rate(j,k) - ebul_flux
           ! transport_change_rate(1,k) = transport_change_rate(1,k) + ebul_flux*ebul_atmo_frac/actual_dt*(dzsoi_decomp(j))/(dzsoi_decomp(1))
-          transport_change_rate(j-1,k) = transport_change_rate(j-1,k) + ebul_flux*(dzsoi_decomp(j))/(dzsoi_decomp(j-1))*(1-ebul_atmo_frac)/actual_dt
+          transport_change_rate(j-1,k) = transport_change_rate(j-1,k) + ebul_flux*(dzsoi_decomp(j))/(dzsoi_decomp(j-1))*(1-ebul_atmo_frac)
         endif
       enddo
     endif
