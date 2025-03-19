@@ -1230,6 +1230,12 @@ end subroutine EMAlquimia_Coldstart
              if(this%plantNH4uptake_pool_number>0) total_immobile_l2e(c,j,this%plantNH4uptake_pool_number) = minval
              if(this%plantNH4uptake_pool_number>0) total_mobile_l2e(c,j,this%plantNH4uptake_pool_number) = minval
 
+             ! Prevent unsaturated layers occurring in the subsurface when there is surface water or the layer above is saturated
+             if(h2osfc_l2e(c) > 0.01) h2o_liqvol(c,j) = porosity_l2e(c,j) - h2o_icevol(c,j)
+             if(j>1 .and. h2o_liqvol(c,j)+h2o_icevol(c,j)<porosity_l2e(c,j)) then
+                if(porosity_l2e(c,j-1) - (h2o_liqvol(c,j-1)+h2o_icevol(c,j-1)) <0.01) h2o_liqvol(c,j) = porosity_l2e(c,j) - h2o_icevol(c,j)
+             endif
+
              ! Prevent negative values of h2o_liqvol
              h2o_liqvol(c,j) = max(h2o_liqvol(c,j),0.0001_r8)
              h2o_liqvol(c,j) = min(h2o_liqvol(c,j),1.0_r8)
