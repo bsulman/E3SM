@@ -392,6 +392,8 @@ contains
     hlev=6  ! cohort
 
     !--- assign gridcells to clumps (and thus pes) ---
+
+     write(iulog,*) 'japg1 ========================> decompInitMod.F90/decompInit_clumps'
     call get_proc_bounds(begg, endg)
 
     allocate(allvecl(nclumps,nlev))   ! local  clumps [gcells,topounits,lunits,cols,pfts,cohs]

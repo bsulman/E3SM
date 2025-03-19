@@ -421,7 +421,9 @@ contains
     ! initialize glc_topo
     ! TODO - does this belong here?
     do c = bounds_proc%begc, bounds_proc%endc
+       write(iulog,*) 'japg10.1 =========> elm_initialized1', c
        l = col_pp%landunit(c)
+       write(iulog,*) 'japg10.2 =========> elm_initialized1', l
        g = col_pp%gridcell(c)
        t = col_pp%topounit(c)
        topi = grc_pp%topi(g)
@@ -539,8 +541,9 @@ contains
     real(r8), pointer     :: data2dptr(:,:) ! temp. pointers for slicing larger arrays
     character(len=32)     :: subname = 'initialize2' 
     !----------------------------------------------------------------------
-
+     write(iulog,*) 'japg1 ===============================================================================================================================> elm_initialized2'
     call t_startf('elm_init2')
+    write(iulog,*) 'japg2 ===============================================================================================================================> elm_initialized2'
 
     if (do_budgets) call WaterBudget_Reset('all')
 
