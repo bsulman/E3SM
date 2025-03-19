@@ -52,7 +52,7 @@ MODULE xx_WRM_read_print
      real(r8) :: ftemp1            ! tempory array
 
      petFileName = adjustl(trim(Tctl%runoffPath))//'pet/'//theTime//'.pet'
-     CALL read_file_grid(petFileName,StorWater%pot_evap)
+     CALL xx_read_file_grid(petFileName,StorWater%pot_evap)
      StorWater%pot_evap = 0.75_r8 * StorWater%pot_evap * 0.001_r8/Tctl%DATAH  !mm/day-->m/s, or mm/hr-->m/s, TO DO
      ! the 0.75 is due to the fact that raw potential evap overestimate the evaporation from large bodies of water
      ! USGS assume between 0.65 to 0.85 woith 0.7 when air temp = water temp
@@ -70,32 +70,32 @@ MODULE xx_WRM_read_print
      if ( ctlSubwWRM%GroundwaterFlag > 0 ) then
         if ( ctlSubwWRM%TotalDemandFlag > 0 ) then
            demFileName = adjustl(trim(ctlSubwWRM%demandPath))//trim(Tctl%baseName)//'.gw_nonirr.txt'
-           CALL read_file_grid(demFileName,StorWater%GWShareNonIrrig)
+           CALL xx_read_file_grid(demFileName,StorWater%GWShareNonIrrig)
         endif
         demFileName = adjustl(trim(ctlSubwWRM%demandPath))//trim(Tctl%baseName)//'.gw_irr.txt'
-        CALL read_file_grid(demFileName,StorWater%GWShareIrrig)
+        CALL xx_read_file_grid(demFileName,StorWater%GWShareIrrig)
      endif
 
      demFileName = adjustl(trim(ctlSubwWRM%demandPath))//trim(Tctl%baseName)//'_'//theTime//'.ConIrrig'
-     CALL read_file_grid(demFileName,StorWater%ConDemIrrig)
+     CALL xx_read_file_grid(demFileName,StorWater%ConDemIrrig)
      StorWater%demand = StorWater%ConDemIrrig * (1._r8 - StorWater%GWShareIrrig)
 
      ! Toal demand means differentiation between irrigation and non irrigation demand
      if ( ctlSubwWRM%TotalDemandFlag > 0 ) then
         demFileName = adjustl(trim(ctlSubwWRM%demandPath))//trim(Tctl%baseName)//'_'//theTime//'.ConNonIrrig'
-        CALL read_file_grid(demFileName,StorWater%ConDemNonIrrig) 
+        CALL xx_read_file_grid(demFileName,StorWater%ConDemNonIrrig)
         StorWater%demand = StorWater%ConDemIrrig*(1._r8-StorWater%GWShareIrrig) + StorWater%ConDemNonIrrig*(1._r8-StorWater%GWShareNonIrrig)
      endif
              
      ! Return flow option means difference between consumptive use and withdrawal
      if ( ctlSubwWRM%ReturnFlowFlag > 0 ) then
         demFileName = adjustl(trim(ctlSubwWRM%demandPath))//trim(Tctl%baseName)//'_'//theTime//'.WithIrrig'
-        CALL read_file_grid(demFileName,StorWater%WithDemIrrig)
+        CALL xx_read_file_grid(demFileName,StorWater%WithDemIrrig)
         StorWater%demand = StorWater%WithDemIrrig*(1._r8-StorWater%GWShareIrrig)
 
         if ( ctlSubwWRM%TotalDemandFlag > 0 ) then
            demFileName = adjustl(trim(ctlSubwWRM%demandPath))//trim(Tctl%baseName)//'_'//theTime//'.WithNonIrrig'
-           CALL read_file_grid(demFileName,StorWater%WithDemNonIrrig)
+           CALL xx_read_file_grid(demFileName,StorWater%WithDemNonIrrig)
            StorWater%demand = StorWater%WithDemIrrig*(1._r8-StorWater%GWShareIrrig) + StorWater%WithDemNonIrrig*(1._r8-StorWater%GWShareNonIrrig)
         endif
      endif
@@ -117,7 +117,8 @@ MODULE xx_WRM_read_print
      strLine = ''
      do iunit=rtmCTL%begr,rtmCTL%endr
         stemp = ''
-        call num2str(value(iunit), stemp, 'e20.10')
+        !call num2str(value(iunit), stemp, 'e20.10')
+        write (stemp, '(e20.10)') iunit
         strLine = trim(strLine)//adjustr(stemp)
      end do
      !print*, "StorWater%demand(137)", StorWater%demand(137)
@@ -141,7 +142,8 @@ MODULE xx_WRM_read_print
      strLine = ''
      do iunit=1, ctlSubwWRM%NDam
         stemp = ''
-        call num2str(value(iunit), stemp, 'e20.10')
+        !call num2str(value(iunit), stemp, 'e20.10')
+        write (stemp, '(e20.10)') iunit
         strLine = trim(strLine)//adjustr(stemp)
      end do
      write(unit=nio,fmt="((a10), (a))") theTime, strLine

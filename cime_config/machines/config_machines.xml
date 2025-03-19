@@ -1143,6 +1143,61 @@
     <!--    <GMAKE>make</GMAKE> <- this doesn't actually work! -->
   </machine>
 
+  <machine MACH="mymac">
+    <DESC>Mac OS/X workstation or laptop</DESC>
+    <NODENAME_REGEX>macbook-pro.local</NODENAME_REGEX>
+    <OS>Darwin</OS>
+    <COMPILERS>gnu</COMPILERS>
+    <MPILIBS>mpich,openmpi,mpi-serial</MPILIBS>
+    <CIME_OUTPUT_ROOT>$ENV{HOME}/project_e3sm/scratch</CIME_OUTPUT_ROOT>
+    <DIN_LOC_ROOT>$ENV{HOME}/project_e3sm/pt-e3sm-inputdata</DIN_LOC_ROOT>
+    <DIN_LOC_ROOT_CLMFORC>$ENV{HOME}/project_e3sm/pt-e3sm-inputdata/atm/datm7</DIN_LOC_ROOT_CLMFORC>
+    <DOUT_S_ROOT>$ENV{HOME}/project_e3sm/scratch/archive/$CASE</DOUT_S_ROOT>
+    <BASELINE_ROOT>$ENV{HOME}/project_e3sm/baselines</BASELINE_ROOT>
+    <CCSM_CPRNC>$ENV{HOME}/project_e3sm/tools/cprnc</CCSM_CPRNC>
+    <GMAKE>gnumake</GMAKE>
+    <GMAKE_J>4</GMAKE_J>
+    <TESTS>e3sm_developer</TESTS>
+    <BATCH_SYSTEM>none</BATCH_SYSTEM>
+    <SUPPORTED_BY>yuanf_at_ornl_dot_gov</SUPPORTED_BY>
+    <MAX_TASKS_PER_NODE>6</MAX_TASKS_PER_NODE>
+    <MAX_MPITASKS_PER_NODE>6</MAX_MPITASKS_PER_NODE>
+    <mpirun mpilib="mpi-serial">
+      <executable> </executable>
+    </mpirun>
+    <mpirun mpilib="mpich">
+      <executable>$ENV{MPI_ROOT}/bin/mpirun</executable>
+      <arguments>
+        <arg name="num_tasks"> -np $TOTALPES</arg>
+      </arguments>
+    </mpirun>
+    <mpirun mpilib="openmpi">
+      <executable>$ENV{MPI_ROOT}/bin/mpirun</executable>
+      <arguments>
+        <arg name="num_tasks"> -np $TOTALPES</arg>
+      </arguments>
+    </mpirun>
+    <module_system type="none"></module_system>   
+    <RUNDIR>$ENV{HOME}/project_e3sm/scratch/$CASE/run</RUNDIR>
+    <EXEROOT>$ENV{HOME}/project_e3sm/scratch/$CASE/bld</EXEROOT>
+    <environment_variables>
+      <env name="PATH">$ENV{PATH}</env>
+    </environment_variables>       
+
+    <environment_variables>
+      <!-- NOTE: the following $ENV{} must be available in your .bashrc, otherwise explicitly give the directories -->
+      <env name="CC_ROOT">$ENV{CC_ROOT}</env>
+      <env name="FC_ROOT">$ENV{FC_ROOT}</env>
+      <env name="MPI_ROOT">$ENV{MPI_ROOT}</env>
+      <env name="HDF5_PATH">$ENV{HDF5_PATH}</env>
+      <env name="NETCDF_PATH">$ENV{NETCDF_PATH}</env>
+      <env name="NETCDF_C_PATH">$ENV{NETCDF_C_PATH}</env>
+      <env name="NETCDF_FORTRAN_PATH">$ENV{NETCDF_FORTRAN_PATH}</env>
+      <env name="BLASLAPACK_LIBDIR">$ENV{BLASLAPACK_LIBDIR}</env>
+    </environment_variables>       
+
+  </machine>
+
   <machine MACH="linux-generic">
     <DESC>Linux workstation or laptop</DESC>
     <NODENAME_REGEX>none</NODENAME_REGEX>
@@ -3531,87 +3586,84 @@
   </machine>
 
   <machine MACH="cades">
-    <DESC>OR-CONDO, CADES-CCSI, os is Linux, 16 pes/nodes, batch system is PBS</DESC>
+    <DESC>OR-CONDO, CADES-CCSI, os is Linux, 16 pesx2HThreads/nodes, batch system is Slurm</DESC>
     <NODENAME_REGEX>or-condo</NODENAME_REGEX>
     <OS>LINUX</OS>
-    <COMPILERS>gnu,intel</COMPILERS>
-    <MPILIBS>openmpi</MPILIBS>
-    <CIME_OUTPUT_ROOT>/lustre/or-hydra/cades-ccsi/scratch/$USER</CIME_OUTPUT_ROOT>
-    <DIN_LOC_ROOT>/nfs/data/ccsi/proj-shared/E3SM/inputdata</DIN_LOC_ROOT>
-    <DIN_LOC_ROOT_CLMFORC>/nfs/data/ccsi/proj-shared/E3SM/inputdata/atm/datm7</DIN_LOC_ROOT_CLMFORC>
+    <COMPILERS>gnu</COMPILERS>
+    <MPILIBS>openmpi,mpi-serial</MPILIBS>
+    <CIME_OUTPUT_ROOT>/lustre/or-scratch/cades-ccsi/scratch/$USER</CIME_OUTPUT_ROOT>
+    <DIN_LOC_ROOT>/lustre/or-scratch/cades-ccsi/proj-shared/project_acme/e3sm_inputdata</DIN_LOC_ROOT>
+    <DIN_LOC_ROOT_CLMFORC>/lustre/or-scratch/cades-ccsi/proj-shared/project_acme/e3sm_inputdata/atm/datm7</DIN_LOC_ROOT_CLMFORC>
     <DOUT_S_ROOT>$CIME_OUTPUT_ROOT/archive/$CASE</DOUT_S_ROOT>
-    <BASELINE_ROOT>/lustre/or-hydra/cades-ccsi/proj-shared/project_acme/baselines/$COMPILER</BASELINE_ROOT>
-    <CCSM_CPRNC>/lustre/or-hydra/cades-ccsi/proj-shared/tools/cprnc.orcondo</CCSM_CPRNC>
+    <BASELINE_ROOT>/lustre/or-scratch/cades-ccsi/proj-shared/project_acme/baselines/$COMPILER</BASELINE_ROOT>
+    <CCSM_CPRNC>/lustre/or-scratch/cades-ccsi/proj-shared/tools/cprnc</CCSM_CPRNC>
     <GMAKE_J>4</GMAKE_J>
     <TESTS>e3sm_developer</TESTS>
     <BATCH_SYSTEM>slurm</BATCH_SYSTEM>
-    <SUPPORTED_BY>yinj -at- ornl.gov</SUPPORTED_BY>
+    <SUPPORTED_BY>yuanf -at- ornl.gov</SUPPORTED_BY>
     <MAX_TASKS_PER_NODE>32</MAX_TASKS_PER_NODE>
     <MAX_MPITASKS_PER_NODE>32</MAX_MPITASKS_PER_NODE>
     <PROJECT_REQUIRED>FALSE</PROJECT_REQUIRED>
     <mpirun mpilib="openmpi" compiler="gnu">
-      <executable>mpirun</executable>
+      <executable>srun</executable>
       <arguments>
-        <arg name="num_tasks"> -np {{ total_tasks }}</arg>
+        <arg name="num_tasks"> -n {{ total_tasks }}</arg>
       </arguments>
     </mpirun>
-    <mpirun mpilib="mpi-serial">
+    <!-- mpirun mpilib="mpi-serial">
       <executable> </executable>
-    </mpirun>
-    <module_system type="module">
-      <init_path lang="sh">/usr/share/Modules/init/sh</init_path>
-      <init_path lang="csh">/usr/share/Modules/init/csh</init_path>
-      <init_path lang="perl">/usr/share/Modules/init/perl.pm</init_path>
-      <init_path lang="python">/usr/share/Modules/init/python.py</init_path>
-      <cmd_path lang="sh">module</cmd_path>
-      <cmd_path lang="csh">module</cmd_path>
-      <cmd_path lang="perl">/usr/bin/modulecmd perl</cmd_path>
-      <cmd_path lang="python">/usr/bin/modulecmd python</cmd_path>
+    </mpirun -->
+    <module_system type="module" allow_error="true">
+      <init_path lang="sh">/sw/cades-open/lmod/8.7.55/init/sh</init_path>
+      <init_path lang="csh">/sw/cades-open/lmod/8.7.55/init/csh</init_path>
+      <init_path lang="perl">/sw/cades-open/lmod/8.7.55/init/perl</init_path>
+      <init_path lang="python">/sw/cades-open/lmod/8.7.55/init/env_modules_python.py</init_path>
+      <cmd_path lang="sh"></cmd_path>
+      <cmd_path lang="csh"></cmd_path>
+      <cmd_path lang="perl"></cmd_path>
+      <cmd_path lang="python">/sw/cades-open/lmod/8.7.55/libexec/lmod python</cmd_path>
       <modules>
         <command name="purge"/>
       </modules>
-      <modules compiler="gnu">
-        <command name="load">PE-gnu</command>
-      </modules>
-      <modules>
-        <command name="load">mkl/2017</command>
-        <command name="load">cmake/3.12.0</command>
-        <command name="load">python/2.7.12</command>
-        <command name="load">nco/4.6.9</command>
-        <command name="load">hdf5-parallel/1.8.17</command>
-        <command name="load">netcdf-hdf5parallel/4.3.3.1</command>
-        <command name="load">pnetcdf/1.9.0</command>
+      <!-- modules compiler="gnu" mpilib="mpi-serial">
+        <command name="load">gcc/12.2.0</command>
+        <command name="load">python/3.10.14</command>
+        <command name="load">cmake/3.24.4</command>
+        <command name="load">openblas/0.3.26</command>
+        <command name="load">hdf5/1.14.3</command>
+      </modules -->
+      <modules compiler="gnu" mpilib="openmpi">
+        <command name="load">DefApps</command>
+        <command name="load">openblas/0.3.26</command>
+        <command name="load">wget/1.21.3</command>
+        <command name="load">cmake/3.24.4</command>
+        <command name="load">python/3.10.14</command>
+        <command name="load">hdf5/1.14.3-mpi</command>
+        <command name="load">netcdf-c/4.9.2-mpi-h5f</command>
+        <command name="load">netcdf-fortran/4.6.1-mpi-h5f</command>
+        <command name="load">parallel-netcdf/1.12.3-mpi</command>
       </modules>
     </module_system>
-
-    <!-- customize these fields as appropriate for your system (max tasks) and
-                            desired layout (change '${group}/${USER}' to your
-      prefered location). -->
     <RUNDIR>$CIME_OUTPUT_ROOT/$CASE/run</RUNDIR>
-    <EXEROOT>$HOME/cases/$CASE/bld</EXEROOT>
-
-    <!--
-         hack for PFLOTRAN coupling to build ELM model.
-         this is a temporary solution, and user must manually edit the following after cloning codes.
-         By default, model will build as PFLOTRAN coupled and run as non-coupled.
-    -->
-    <environment_variables>
-      <env name="PERL5LIB">/software/user_tools/current/cades-ccsi/perl5/lib/perl5/</env>
-        <!-- for CLM-PFLOTRAN coupling, the $PETSC_DIR and $CLM_PFLOTRAN_SOURCE_DIR must be user-defined specifically upon machines, e.g. in .bashrc -->
-        <!-- (NOTE: on CADES, PETSc built with mkl libraries, $MKLROOT_INC with '-I' and $MKLROOT_LIB with '-L') -->
-        <!-- pflotran codes are pre-built as libpflotran.a in $CLM_PFLOTRAN_SOURCE_DIR -->
-      <!-- for CLM-PFLOTRAN coupling, the $PETSC_DIR and $CLM_PFLOTRAN_SOURCE_DIR must be user-defined specifically upon machines, e.g. in .bashrc -->
-      <!-- pflotran codes are pre-built as libpflotran.a in $CLM_PFLOTRAN_SOURCE_DIR -->
-      <!-- AND, setting 'CLM_USE_PETSC' value to 'TRUE' in 'env_build.xml' to append PETSc includes and Libraries,
-                otherwise,explicitly appending  ' -I$ENV{PETSC_DIR}/include $ENV{MKLROOT_INC}' in 'PFLOTRAN_INC' and
-                 ' -L$ENV{PETSC_DIR}/lib -lpetsc -lparmetis -lmetis $ENV{MKLROOT_LIB} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential' in 'PFLOTTRAN_LIB' -->
-        <env name="PETSC_PATH">/software/user_tools/current/cades-ccsi/petsc-x/openmpi-1.10-gcc-5.3</env>
-        <env name="PETSC_ARCH"></env> <!-- this is needed for cmake list of CLM_USE_PETSC, default by 'null' if installed PETSc rather than Built only -->
-        <env name="PFLOTRAN_INC"> -I$ENV{CLM_PFLOTRAN_SOURCE_DIR} -I$ENV{PETSC_PATH}/include</env>
-        <!-- 2021-01-28: PETSc libraries rebuilt as shared libraries on CADES, so need to set '-Wl,-rpath,', otherwise may cause issue of no libraries found when submit job -->
-        <env name="PFLOTRAN_LIB"> -L$ENV{CLM_PFLOTRAN_SOURCE_DIR} -lpflotran -L$ENV{PETSC_PATH}/lib -lpetsc -Wl,-rpath,$ENV{PETSC_PATH}/lib </env>
-      <env name="PERL5LIB">/software/user_tools/current/cades-ccsi/perl5/lib/perl5/</env>
+    <EXEROOT>$CIME_OUTPUT_ROOT/$CASE/bld</EXEROOT>
+    <environment_variables compiler="gnu" mpilib="openmpi">
+      <env name="HDF5_PATH">$ENV{OLCF_HDF5_ROOT}</env>
+      <env name="NETCDF_PATH">$ENV{OLCF_NETCDF_C_ROOT}</env>
+      <env name="NETCDF_C_PATH">$ENV{OLCF_NETCDF_C_ROOT}</env>
+      <env name="NETCDF_FORTRAN_PATH">$ENV{OLCF_NETCDF_FORTRAN_ROOT}</env>
+      <env name="PNETCDF_PATH">$ENV{OLCF_PARALLEL_NETCDF_ROOT}</env>
+      <env name="BLASLAPACK_LIBDIR">$ENV{OLCF_OPENBLAS_ROOT}/lib</env>
+      <env name="PERL5LIB">/home/f9y/perl5/lib/perl5</env>
+      <env name="PETSC_PATH">/nfs/data/ccsi/proj-shared/E3SM/tools/petsc-x/release-3.20</env>
     </environment_variables>
+    <!-- environment_variables compiler="gnu" mpilib="mpi-serial">
+      <env name="HDF5_PATH"></env>
+      <env name="NETCDF_PATH"></env>
+      <env name="NETCDF_C_PATH"></env>
+      <env name="NETCDF_FORTRAN_PATH"></env>
+      <env name="BLASLAPACK_LIBDIR">$ENV{OLCF_OPENBLAS_ROOT}/lib</env>
+      <env name="PERL5LIB">/home/f9y/perl5/lib/perl5</env>
+    </environment_variables -->
   </machine>
 
   <machine MACH="cades-baseline">
