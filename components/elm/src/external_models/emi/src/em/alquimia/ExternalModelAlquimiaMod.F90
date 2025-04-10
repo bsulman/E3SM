@@ -2541,38 +2541,37 @@ end subroutine EMAlquimia_Coldstart
     endif
     enddo ! Layer loop
 
-    ! I don't think this is in the right place
-    if(actual_dt<=-60.0_r8) then
-      ! write(iulog,*),'Alquimia: Time step cut to 60 s. Attempting to solve by pausing transport and solving layer by layer'
-      do j=1,nlevdecomp
-            ! Update properties from ELM
-        this%chem_state%porosity =    porosity(j)
-        this%chem_state%temperature = temperature(j) - 273.15
-        this%chem_properties%volume = volume(j)
-        this%chem_properties%saturation = sat(j) ! Set minimum saturation to stop concentrations from blowing up at low soil moisture
-        call this%copy_ELM_to_Alquimia(j,water_density,&
-                                          aqueous_pressure,&
-                                          total_mobile,&
-                                          total_immobile,&
-                                          mineral_volume_fraction,&
-                                          mineral_specific_surface_area,&
-                                          surface_site_density,&
-                                          cation_exchange_capacity,&
-                                          aux_doubles,&
-                                          aux_ints) 
-        call run_onestep(this,dt,num_cuts,ncuts)
-        call this%copy_Alquimia_to_ELM(j,water_density_tmp,&
-                                        aqueous_pressure_tmp,&
-                                        total_mobile_tmp,free_mobile_tmp,&
-                                        total_immobile_tmp,&
-                                        mineral_volume_fraction_tmp,&
-                                        mineral_specific_surface_area_tmp,&
-                                        surface_site_density_tmp,&
-                                        cation_exchange_capacity_tmp,&
-                                        aux_doubles_tmp,&
-                                        aux_ints_tmp)
-      enddo
-    endif
+    ! if(actual_dt<=-60.0_r8) then
+    !   ! write(iulog,*),'Alquimia: Time step cut to 60 s. Attempting to solve by pausing transport and solving layer by layer'
+    !   do j=1,nlevdecomp
+    !         ! Update properties from ELM
+    !     this%chem_state%porosity =    porosity(j)
+    !     this%chem_state%temperature = temperature(j) - 273.15
+    !     this%chem_properties%volume = volume(j)
+    !     this%chem_properties%saturation = sat(j) ! Set minimum saturation to stop concentrations from blowing up at low soil moisture
+    !     call this%copy_ELM_to_Alquimia(j,water_density,&
+    !                                       aqueous_pressure,&
+    !                                       total_mobile,&
+    !                                       total_immobile,&
+    !                                       mineral_volume_fraction,&
+    !                                       mineral_specific_surface_area,&
+    !                                       surface_site_density,&
+    !                                       cation_exchange_capacity,&
+    !                                       aux_doubles,&
+    !                                       aux_ints) 
+    !     call run_onestep(this,dt,num_cuts,ncuts)
+    !     call this%copy_Alquimia_to_ELM(j,water_density_tmp,&
+    !                                     aqueous_pressure_tmp,&
+    !                                     total_mobile_tmp,free_mobile_tmp,&
+    !                                     total_immobile_tmp,&
+    !                                     mineral_volume_fraction_tmp,&
+    !                                     mineral_specific_surface_area_tmp,&
+    !                                     surface_site_density_tmp,&
+    !                                     cation_exchange_capacity_tmp,&
+    !                                     aux_doubles_tmp,&
+    !                                     aux_ints_tmp)
+    !   enddo
+    ! endif
 
     if(.not. this%chem_status%converged) then
         ! If we are not at minimum timestep yet, cut and keep going
@@ -2832,46 +2831,46 @@ subroutine run_vert_transport(this,actual_dt, total_mobile, free_mobile, &
     ! This is done after applying transport_change_rate to total_mobile so it's not double counted
     ! transport_change_rate(1:nlevdecomp,k) = transport_change_rate(1:nlevdecomp,k) !+ surf_equil_step(1:nlevdecomp,k)/actual_dt/dzsoi_decomp(1:nlevdecomp)
 
-  ! ! Ebullition flux, from the bottom up until reaching unsaturated layer
-    if(this%is_dissolved_gas(k)) then
-      do j=nlevdecomp,2,-1
-        if(sat(j)<0.9 .or. liq_frac(j)<0.95) exit
-        ! Calculate total water pressure. Using calculation from Jiaze
-        water_pressure = 101.325e3_r8 ! Should take H2OSFC into account also, and ideally use actual atmospheric pressure
-        do ii=1,j
-          water_pressure = water_pressure + porosity(ii)*sat(ii)*dzsoi_decomp(ii)*grav*denh2o
-        enddo
-        ! Gas pressure in Pa from Jiaze's calculation. Should maybe include a bubble gas fraction or take other gas partial pressures into account
-        if(free_mobile(j,k)>0.0_r8) then
-          gas_pressure = free_mobile(j,k)/porosity(j)/(this%Henry_const(k)*exp(-this%Henry_Tdep(k)*(1/temperature(j)-1/298.15)))
-        else
-          gas_pressure = total_mobile(j,k)/porosity(j)/(this%Henry_const(k)*exp(-this%Henry_Tdep(k)*(1/temperature(j)-1/298.15)))
-        endif
-        ! This is problematic in the loop because free_mobile isn't getting updated with transport changes
-        ! One way to get around this would be to send it to the first unsaturated layer instead of next layer up
-        ebul_flux = free_mobile(j,k)*max((gas_pressure-water_pressure)/gas_pressure,0.0)/3600_r8 ! mol/m3
-        ! Move excess gas up one layer
-        ! What if we spread it over a larger area? Or have some fraction go directly to atmosphere depending on time step?
-        if(total_mobile(j,k) < 0.0) then
-          ebul_flux=0.0
-        endif
-        ebul_flux=min(ebul_flux,total_mobile(j,k)*0.9_r8/3600_r8)*0.0
-        if(ebul_flux>0.0_r8) then
-          if(ebul_flux>total_mobile(j,k)*0.5/3600.0) write(iulog,*) 'Ebullition: ',j,k,water_pressure,gas_pressure,free_mobile(j,k),total_mobile(j,k),ebul_flux*3600
-          ! ebul_flux is in mol/m3, so transfering to a different layer requires correcting for difference in layer thickness so it's in mols
-          ! transport_change_rate is in mol/m3/s so ebul_flux needs to be divided by time step length 
-          ! write(iulog,*),'Ebullition: ',j,k,gas_pressure,water_pressure,ebul_flux,total_mobile(c,j,k),temperature(c,j),this%Henry_const(k),this%Henry_Tdep(k)
-          total_mobile(j,k) = total_mobile(j,k) - ebul_flux*actual_dt
-          total_mobile(j-1,k) = total_mobile(j-1,k) + ebul_flux*actual_dt*(dzsoi_decomp(j))/(dzsoi_decomp(j-1))*(1-ebul_atmo_frac)
-          free_mobile(j,k) = free_mobile(j,k) - ebul_flux*actual_dt
-          free_mobile(j-1,k) = free_mobile(j-1,k) + ebul_flux*actual_dt*(dzsoi_decomp(j))/(dzsoi_decomp(j-1))*(1-ebul_atmo_frac)
-          surf_equil_step(1,k) = surf_equil_step(1,k) - ebul_flux*actual_dt*ebul_atmo_frac*dzsoi_decomp(j)
-          transport_change_rate(j,k) = transport_change_rate(j,k) - ebul_flux
-          ! transport_change_rate(1,k) = transport_change_rate(1,k) + ebul_flux*ebul_atmo_frac/actual_dt*(dzsoi_decomp(j))/(dzsoi_decomp(1))
-          transport_change_rate(j-1,k) = transport_change_rate(j-1,k) + ebul_flux*(dzsoi_decomp(j))/(dzsoi_decomp(j-1))*(1-ebul_atmo_frac)
-        endif
-      enddo
-    endif
+  !! Ebullition flux, from the bottom up until reaching unsaturated layer
+  !   if(this%is_dissolved_gas(k)) then
+  !     do j=nlevdecomp,2,-1
+  !       if(sat(j)<0.9 .or. liq_frac(j)<0.95) exit
+  !       ! Calculate total water pressure. Using calculation from Jiaze
+  !       water_pressure = 101.325e3_r8 ! Should take H2OSFC into account also, and ideally use actual atmospheric pressure
+  !       do ii=1,j
+  !         water_pressure = water_pressure + porosity(ii)*sat(ii)*dzsoi_decomp(ii)*grav*denh2o
+  !       enddo
+  !       ! Gas pressure in Pa from Jiaze's calculation. Should maybe include a bubble gas fraction or take other gas partial pressures into account
+  !       if(free_mobile(j,k)>0.0_r8) then
+  !         gas_pressure = free_mobile(j,k)/porosity(j)/(this%Henry_const(k)*exp(-this%Henry_Tdep(k)*(1/temperature(j)-1/298.15)))
+  !       else
+  !         gas_pressure = total_mobile(j,k)/porosity(j)/(this%Henry_const(k)*exp(-this%Henry_Tdep(k)*(1/temperature(j)-1/298.15)))
+  !       endif
+  !       ! This is problematic in the loop because free_mobile isn't getting updated with transport changes
+  !       ! One way to get around this would be to send it to the first unsaturated layer instead of next layer up
+  !       ebul_flux = free_mobile(j,k)*max((gas_pressure-water_pressure)/gas_pressure,0.0)/3600_r8 ! mol/m3
+  !       ! Move excess gas up one layer
+  !       ! What if we spread it over a larger area? Or have some fraction go directly to atmosphere depending on time step?
+  !       if(total_mobile(j,k) < 0.0) then
+  !         ebul_flux=0.0
+  !       endif
+  !       ebul_flux=min(ebul_flux,total_mobile(j,k)*0.9_r8/3600_r8)*0.0
+  !       if(ebul_flux>0.0_r8) then
+  !         if(ebul_flux>total_mobile(j,k)*0.5/3600.0) write(iulog,*) 'Ebullition: ',j,k,water_pressure,gas_pressure,free_mobile(j,k),total_mobile(j,k),ebul_flux*3600
+  !         ! ebul_flux is in mol/m3, so transfering to a different layer requires correcting for difference in layer thickness so it's in mols
+  !         ! transport_change_rate is in mol/m3/s so ebul_flux needs to be divided by time step length 
+  !         ! write(iulog,*),'Ebullition: ',j,k,gas_pressure,water_pressure,ebul_flux,total_mobile(c,j,k),temperature(c,j),this%Henry_const(k),this%Henry_Tdep(k)
+  !         total_mobile(j,k) = total_mobile(j,k) - ebul_flux*actual_dt
+  !         total_mobile(j-1,k) = total_mobile(j-1,k) + ebul_flux*actual_dt*(dzsoi_decomp(j))/(dzsoi_decomp(j-1))*(1-ebul_atmo_frac)
+  !         free_mobile(j,k) = free_mobile(j,k) - ebul_flux*actual_dt
+  !         free_mobile(j-1,k) = free_mobile(j-1,k) + ebul_flux*actual_dt*(dzsoi_decomp(j))/(dzsoi_decomp(j-1))*(1-ebul_atmo_frac)
+  !         surf_equil_step(1,k) = surf_equil_step(1,k) - ebul_flux*actual_dt*ebul_atmo_frac*dzsoi_decomp(j)
+  !         transport_change_rate(j,k) = transport_change_rate(j,k) - ebul_flux
+  !         ! transport_change_rate(1,k) = transport_change_rate(1,k) + ebul_flux*ebul_atmo_frac/actual_dt*(dzsoi_decomp(j))/(dzsoi_decomp(1))
+  !         transport_change_rate(j-1,k) = transport_change_rate(j-1,k) + ebul_flux*(dzsoi_decomp(j))/(dzsoi_decomp(j-1))*(1-ebul_atmo_frac)
+  !       endif
+  !     enddo
+  !   endif
     ! write(iulog,*),'Diff rate after ebul',transport_change_rate(1:nlevdecomp,k)*dzsoi_decomp(1:nlevdecomp)
     ! write(iulog,*),k,'Total diff after ebul',sum(transport_change_rate(1:nlevdecomp,k)*dzsoi_decomp(1:nlevdecomp))*actual_dt,'Surf adv',surf_adv_step(k),'Surf equil',surf_equil_step(k),'Lat flux',lat_flux_step(k)
 
