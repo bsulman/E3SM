@@ -14,6 +14,7 @@ module SoilMoistStressMod
   ! Created by Jinyun Tang, Feb., 2014
   !
   use ColumnDataType   , only : col_es, col_ws
+  use ColumnDataType   , only : col_chem
   !
   implicit none
   save
@@ -321,6 +322,7 @@ contains
     use VegetationType            , only : veg_pp
     use VegetationDataType   , only : veg_wf
     use elm_varctl       , only : use_hydrstress
+    use elm_varctl       , only : use_alquimia
     use CanopyStateType , only : canopystate_type
     use SoilHydrologyType, only : soilhydrology_type
     !
@@ -397,13 +399,21 @@ contains
                rresis(p,j) = min( (eff_porosity(c,j)/watsat(c,j))* &
                (smp_node - smpsc(veg_pp%itype(p))) / (smpso(veg_pp%itype(p)) - smpsc(veg_pp%itype(p))), 1._r8)   
                
-               !using osm_inhib to change root uptake -SLL
-               if (salinity(c) .ge. sal_threshold(veg_pp%itype(p))) then
-                  osm_inhib(p) = exp(-0.5*((salinity(c)-sal_opt(veg_pp%itype(p)))/sal_tol(veg_pp%itype(p)))**2)
-                  rresis(p,j) = rresis(p,j)*osm_inhib(p)
+               ! Using osm_inhib to change root uptake representing osmotic salinity stress
+               ! If using alquimia, salinity is available for each soil layer. Otherwise, with tidal code salinity of the adjacent water body is used
+               if(use_alquimia) then
+                  if(col_chem%soil_salinity(c,j) .ge. sal_threshold(veg_pp%itype(p))) then
+                     osm_inhib(p) = exp(-0.5*((col_chem%soil_salinity(c,j)-sal_opt(veg_pp%itype(p)))/sal_tol(veg_pp%itype(p)))**2)
+                     rresis(p,j) = rresis(p,j)*osm_inhib(p)
+                  endif
+               else
+                  if (salinity(c) .ge. sal_threshold(veg_pp%itype(p))) then
+                     osm_inhib(p) = exp(-0.5*((salinity(c)-sal_opt(veg_pp%itype(p)))/sal_tol(veg_pp%itype(p)))**2)
+                     rresis(p,j) = rresis(p,j)*osm_inhib(p)
+                  endif
                endif
 
-               !use floodf to change root water uptake
+               !use floodf to change root water uptake as a function of water level to represent saturation/inundation stress
                if(h2osfc(c) .gt. 0._r8) then
                   waterlevel = h2osfc(c) ! mm, with positive meaning above soil surface
                else
@@ -411,11 +421,8 @@ contains
                endif
                if (waterlevel .gt. veg_vp%waterlevel_threshold(veg_pp%itype(p))) then
                   floodf(p) = exp(-0.5*((waterlevel-veg_vp%waterlevel_opt(veg_pp%itype(p)))/veg_vp%waterlevel_tol(veg_pp%itype(p)))**2)
-                  ! floodf(p)=(htop(p)*1000-h2osfc(c))/(htop(p)*1000)   
-               else
-                  floodf(p) = 1.0_r8                
+                  rresis(p,j) = rresis(p,j)*floodf(p)        
                endif
-               rresis(p,j) = rresis(p,j)*floodf(p) !BNS limit flood effect, should update to optimal PFT range
 
                if (.not. (perchroot .or. perchroot_alt) ) then
                   rootr(p,j) = rootfr(p,j)*rresis(p,j)
