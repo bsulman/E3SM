@@ -484,6 +484,8 @@ contains
        do fc = 1, num_hydrologyc
           c = filter_hydrologyc(fc)
           jwt(c) = nlevbed
+          qflx_lat_aqu(c) = 0._r8
+          qflx_tide(c) = 0._r8
           ! allow jwt to equal zero when zwt is in top layer
           do j = 1,nlevbed
              if(zwt(c) <= zi(c,j)) then
