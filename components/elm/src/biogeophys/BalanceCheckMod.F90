@@ -333,10 +333,12 @@ contains
 #elif (defined MARSH)
              errh2o(c) = endwb(c) - begwb(c) &
                   - (forc_rain_col(c) + forc_snow_col(c)  + qflx_floodc(c) + qflx_irrig(c) &
-                  + qflx_tide(c) & !TAO qflx_tide added
                   - qflx_evap_tot(c) - qflx_surf(c) + qflx_surf_input(c) - qflx_h2osfc_surf(c) &
                   - qflx_qrgwl(c) - qflx_drain(c) - qflx_drain_perched(c) - qflx_snwcp_ice(c)  &
-                  + qflx_lat_aqu(c)) * dtime
+                  ) * dtime
+            if (lun_pp%itype(col_pp%landunit(c)) == istsoil .or. lun_pp%itype(col_pp%landunit(c))==istcrop) then
+               errh2o(c) = errh2o(c) - (qflx_tide(c) + qflx_lat_aqu(c)) * dtime
+            endif
 #else
              errh2o(c) = endwb(c) - begwb(c) &
                   - (forc_rain_col(c) + forc_snow_col(c)  + qflx_floodc(c) + qflx_surf_irrig_col(c) + qflx_over_supply_col(c) &

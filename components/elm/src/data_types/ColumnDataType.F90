@@ -5631,7 +5631,7 @@ contains
           ptr_col=this%qflx_drain_vr)
 
 #if (defined HUM_HOL || defined MARSH)
-    this%qflx_lat_aqu(begc:endc) = spval
+    this%qflx_lat_aqu(begc:endc) = 0.0_r8
     call hist_addfld1d (fname='QFLX_LAT_AQU',  units='mm/s',  &
          avgflag='A', long_name='Lateral flow between hummock and hollow', &
          ptr_col=this%qflx_lat_aqu, c2l_scale_type='urbanf')
@@ -5643,7 +5643,7 @@ contains
          ptr_col=this%qflx_lat_aqu_layer)
 
    !SLL added 4/15/21
-   this%qflx_tide(begc:endc) = spval
+   this%qflx_tide(begc:endc) = 0.0_r8
     call hist_addfld1d (fname='QFLX_TIDE',  units='mm H2O/s',  &
          avgflag='A', long_name='Tidal flux between marsh columns', &
          ptr_col=this%qflx_tide)
