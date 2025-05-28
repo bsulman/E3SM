@@ -1691,7 +1691,7 @@ contains
                    rsub_top_max = min(5.5e-3_r8, rsub_top_globalmax)
 #endif
 #if (defined MARSH)                   
-                   rsub_top_max = rsub_top_globalmax
+                   rsub_top_max = rsub_top_globalmax*sin((rpi/180.) * col_pp%topo_slope(c))
 #endif
                 end if
              else
