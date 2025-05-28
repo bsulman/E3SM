@@ -738,6 +738,8 @@ contains
                endif
 
                 h2osfc_tide(c) = h2osfc_tide(c) + tide_baseline - ht_above_stream(c)*1000._r8
+                ! Limit h2osfc_tide to above bedrock level
+                h2osfc_tide(c) = max(h2osfc_tide(c),-zi(c,nlevbed-1)*1000_r8)
 
                !compute lateral subsurface flux
                if (jwt(c) .lt. nlevbed) then
