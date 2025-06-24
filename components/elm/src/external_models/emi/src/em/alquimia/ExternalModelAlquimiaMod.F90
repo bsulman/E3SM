@@ -190,6 +190,7 @@ module ExternalModelAlquimiaMod
 
 
   real(r8),parameter :: min_dt = 0.1 ! Minimum time step length(s) before crashing model on non-convergence in ReactionStepOperatorSplit
+  real(r8),parameter :: minval = 1e-20_r8 ! Minimum value to pass to PFLOTRAN to avoid numerical errors with concentrations of 0
 #ifndef USE_ALQUIMIA_LIB
   integer, parameter :: kAlquimiaMaxStringLength = 512
 #endif
@@ -989,7 +990,7 @@ end subroutine EMAlquimia_Coldstart
     real(r8)                            :: CO2_before, molperL_to_molperm3,DON_before,excess_NO3_uptake,excess_NH4_uptake
     real(r8)                            :: totalC_before, totalN_before, totalC_after, totalN_after, Nflux, Cflux
     real(r8) , dimension(nlevdecomp)    :: liq_frac
-    real(r8), parameter                 :: minval = 1.e-30_r8 ! Minimum value to pass to PFLOTRAN to avoid numerical errors with concentrations of 0
+    ! real(r8), parameter                 :: minval = 1.e-30_r8 ! Minimum value to pass to PFLOTRAN to avoid numerical errors with concentrations of 0
 
     ! Setting these to the values in PFLOTRAN clm_rspfuncs.F90
     real(r8), parameter :: natomw = 14.0067d0 ! Value in clmvarcon is 14.007
@@ -1868,7 +1869,7 @@ end subroutine EMAlquimia_Coldstart
     integer (c_int)   , pointer :: alquimia_int_data(:)
 
     real(r8) :: molperL_to_molperm3
-    real(r8), parameter   :: minval = 1.e-35_r8
+    ! real(r8), parameter   :: minval = 1.e-25_r8
 
     this%chem_state%water_density = water_density(j)
     this%chem_state%aqueous_pressure = aqueous_pressure(j)
@@ -2683,7 +2684,7 @@ subroutine run_vert_transport(this,actual_dt, total_mobile, free_mobile, &
 
   integer :: ii,j,k
 
-  real(r8), parameter   :: minval = 1.e-35_r8
+  ! real(r8), parameter   :: minval = 1.e-35_r8
 
   ebul_atmo_frac=0.0 ! Fraction of ebullition that goes directly to atmosphere instead of next layer up
 
