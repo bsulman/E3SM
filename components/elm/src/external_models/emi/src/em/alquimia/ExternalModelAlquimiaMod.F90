@@ -2731,10 +2731,12 @@ subroutine run_vert_transport(this,actual_dt, total_mobile, free_mobile, &
         ! Henry constant mol/(m3*Pa)
         ! gas flux over finite time step = (C_atmo - C_layer)*(1-exp(-kD/z*dt)) based on integrating diffusion equation
         ! Maybe better equation is (C_atmo - C_layer)*erf(z/(2*sqrt(D*dt)))
-        total_resist = total_resist + diffus(j)*dzsoi_decomp(j)
+        total_resist = total_resist + (diffus(j)+2.5e-9_r8*0.005_r8*exp(10.0_r8*sat(j)*liq_frac(j)*porosity(j)))*dzsoi_decomp(j)
         ! Effective diffus is harmonic mean of 1/diffus in each layer above the current one (equals 1/ weighted harmonic mean of resistance)
         ! This could be updated to include other pathways like plant-mediated transport
         effective_diffus = total_resist/zsoi(j)
+        ! Make surface equilibration slower up than down (try to fix methane emission issue)
+        if(atmo_pressure*this%atmo_mixing_ratio(k) < gas_pressure) effective_diffus = effective_diffus*0.1_r8
         surf_equil_step(j,k) = (atmo_pressure*this%atmo_mixing_ratio(k) - gas_pressure)*& ! Difference in gas pressure
                                 (1.0_r8-erf(zsoi(j)/(2.0*sqrt(effective_diffus*3600_r8))))*actual_dt/3600.0_r8*&          ! Integrate effective diffusion over time
                                 (this%Henry_const(k)*exp(-this%Henry_Tdep(k)*(1/temperature(j)-1/298.15)))*& ! Convert to concentration using Henry constant
