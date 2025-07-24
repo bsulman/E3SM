@@ -1712,7 +1712,7 @@ end subroutine EMAlquimia_Coldstart
 
               ! Assuming this is a precision issue in PFLOTRAN solve, change NO3 runoff or top layer NO3 to balance things
               ! This is to fix a tradeoff where making the precision of the PFLOTRAN solve too fine means it crashes on convergence errors, but making it too low violates ELM N balance limit of 1e-8
-              if (  abs(totalN_after + Nflux - totalN_before) < 5e-7 ) then ! Only do it for relatively small errors
+              if (  abs(totalN_after + Nflux - totalN_before) < 1e-6 ) then ! Only do it for relatively small errors
                 NO3runoff_e2l(c) = NO3runoff_e2l(c) - (totalN_after + Nflux - totalN_before)/dt
                 ! do j=nlevdecomp-1,1,-1
                 !   write(iulog,*) 'Layer ',j,no3_e2l(c,j)*dz(c,j),abs(totalN_after + Nflux - totalN_before)*100
@@ -2737,6 +2737,7 @@ subroutine run_vert_transport(this,actual_dt, total_mobile, free_mobile, &
         effective_diffus = total_resist/zsoi(j)
         ! Make surface equilibration slower up than down (try to fix methane emission issue)
         if(atmo_pressure*this%atmo_mixing_ratio(k) < gas_pressure) effective_diffus = effective_diffus*0.1_r8
+        ! https://en.wikipedia.org/wiki/Fick%27s_laws_of_diffusion
         surf_equil_step(j,k) = (atmo_pressure*this%atmo_mixing_ratio(k) - gas_pressure)*& ! Difference in gas pressure
                                 (1.0_r8-erf(zsoi(j)/(2.0*sqrt(effective_diffus*3600_r8))))*actual_dt/3600.0_r8*&          ! Integrate effective diffusion over time
                                 (this%Henry_const(k)*exp(-this%Henry_Tdep(k)*(1/temperature(j)-1/298.15)))*& ! Convert to concentration using Henry constant
