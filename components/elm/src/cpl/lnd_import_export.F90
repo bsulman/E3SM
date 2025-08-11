@@ -263,7 +263,7 @@ contains
           metvars(1) = 'TBOT'
           metvars(2) = 'PSRF'
           metvars(3) = 'QBOT'
-          !if (atm2lnd_vars%metsource .eq. 2) metvars(3) = 'RH'
+          if (atm2lnd_vars%metsource .eq. 2) metvars(3) = 'RH'
           if (atm2lnd_vars%metsource .ne. 5) metvars(4) = 'FSDS'
           if (atm2lnd_vars%metsource .ne. 5) metvars(5) = 'PRECTmms'
           if (atm2lnd_vars%metsource .ne. 5) metvars(6) = 'WIND'

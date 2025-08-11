@@ -1574,7 +1574,7 @@ end subroutine EMAlquimia_Coldstart
 
               if(this%chloride_pool_number>0) then
                   ! Chloride concentration needs to be converted to ppt (by mass) in water = mg/L . mol Cl- /m3 water * 35.453 g/mol * 1.8066 g salt/g Cl / 1000 g Cl/kg Cl
-                  salinity_e2l(c,j) = total_mobile_e2l(c,j,this%chloride_pool_number)/(porosity_l2e(c,j)*max(h2o_liqvol(c,j)/porosity_l2e(c,j),0.01))*35.453*1.80655/1000.0
+                  salinity_e2l(c,j) = total_mobile_e2l(c,j,this%chloride_pool_number)/(porosity_l2e(c,j)*max((h2o_liqvol(c,j)+h2o_icevol(c,j))/porosity_l2e(c,j),0.01))*35.453*1.80655/1000.0
               else
                   salinity_e2l(c,j) = 0.0_r8
               endif
