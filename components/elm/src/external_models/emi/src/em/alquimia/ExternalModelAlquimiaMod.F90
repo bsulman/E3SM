@@ -989,7 +989,7 @@ end subroutine EMAlquimia_Coldstart
     real(r8) , pointer, dimension(:)     :: actual_dt_e2l
     real(r8)                            :: CO2_before, molperL_to_molperm3,DON_before,excess_NO3_uptake,excess_NH4_uptake
     real(r8)                            :: totalC_before, totalN_before, totalC_after, totalN_after, Nflux, Cflux
-    real(r8)                            :: tot_tidal_inflow
+    real(r8)                            :: tot_tidal_inflow, tot_tidal_outflow
     real(r8) , dimension(nlevdecomp)    :: liq_frac
     ! real(r8), parameter                 :: minval = 1.e-30_r8 ! Minimum value to pass to PFLOTRAN to avoid numerical errors with concentrations of 0
 
@@ -1372,9 +1372,15 @@ end subroutine EMAlquimia_Coldstart
 
               ! Limit velocity of vertical water flux to 1 cm/hour for now (for purposes of advection)
               ! Higher velocities tend to produce negative solute concentrations and crash the model
-              qflx_adv_l2e(c,1:nlevdecomp-1) = max(sum(qflx_drain_l2e(c,1:nlevdecomp))/dt,-10.0/dt)
+              tot_tidal_outflow = 0.0_r8 ! units of mm (not mm/s)
+              do j=2,nlevdecomp
+                if(qflx_lat_aqu_l2e(c,j) < 0) then
+                  tot_tidal_outflow = tot_tidal_outflow - qflx_lat_aqu_l2e(c,j)
+                endif
+              enddo
+              qflx_adv_l2e(c,1:nlevdecomp-1) = max(sum(qflx_drain_l2e(c,1:nlevdecomp))/dt+tot_tidal_outflow/dt,-10.0/dt)
               qflx_adv_l2e(c,nlevdecomp) = 0.0_r8
-              qflx_adv_l2e(c,0) = max(min(qflx_adv_l2e(c,0),sum(qflx_drain_l2e(c,1:nlevdecomp))/dt),-10.0/dt)
+              qflx_adv_l2e(c,0) = max(min(qflx_adv_l2e(c,0),sum(qflx_drain_l2e(c,1:nlevdecomp))/dt+tot_tidal_outflow/dt),-10.0/dt)
 
               ! Make it so lateral flux of water in (from tides) comes in from the top instead of straight to lowest unsaturated layer
               tot_tidal_inflow = 0.0_r8 ! units of mm (not mm/s)
@@ -1398,7 +1404,6 @@ end subroutine EMAlquimia_Coldstart
                 endif
                   qflx_lat_aqu_l2e(c,j) = qflx_lat_aqu_l2e(c,j) - (qflx_adv_l2e(c,j-1)-qflx_adv_l2e(c,j))*dt
               enddo
-
 
 
               ! Problem: in elm_driver, vertical water movement and lateral (tidal) flow are calculated, then BGC, then drainage. 
