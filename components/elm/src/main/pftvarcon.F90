@@ -707,6 +707,10 @@ contains
     waterlevel_opt(:) = 0.0_r8
     waterlevel_tol(:) = 50.0_r8
 
+    sal_threshold(:) = 50.0e6_r8 ! Very high value to effectively turn off if unset
+    sal_opt(:) = 0.0_r8
+    sal_tol(:) = 50.0_r8
+
     ! Set specific vegetation type values
 
     if (masterproc) then
