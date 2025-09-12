@@ -1312,7 +1312,7 @@ end subroutine EMAlquimia_Coldstart
 
                 ! Need to distinguish between tidal flooding and rainfall infiltration. Doing based on h2osfc but not sure if that's correct
                 ! Now that we have tide height info, we could use that instead. But this won't be correct while tide is going down
-                if (h2osfc_l2e(c)>0) then
+                if (.TRUE.) then !(h2osfc_l2e(c)>0) then
                   surf_bc(this%chloride_pool_number) = flood_salinity_l2e(c)/(35.453*.0018066_r8)
                   if (this%sulfate_pool_number>0) then
                     surf_bc(this%sulfate_pool_number) = flood_salinity_l2e(c)/.0018066_r8*0.14_r8/96.06_r8 ! Ratio from Jiaze's manuscript
@@ -1380,10 +1380,15 @@ end subroutine EMAlquimia_Coldstart
               enddo
               qflx_adv_l2e(c,1:nlevdecomp-1) = max(sum(qflx_drain_l2e(c,1:nlevdecomp))/dt+tot_tidal_outflow/dt,-10.0/dt)
               qflx_adv_l2e(c,nlevdecomp) = 0.0_r8
-              qflx_adv_l2e(c,0) = max(min(qflx_adv_l2e(c,0),sum(qflx_drain_l2e(c,1:nlevdecomp))/dt+tot_tidal_outflow/dt),-10.0/dt)
+              ! qflx_adv_l2e(c,0) = max(min(qflx_adv_l2e(c,0),sum(qflx_drain_l2e(c,1:nlevdecomp))/dt+tot_tidal_outflow/dt),-10.0/dt)
+              qflx_adv_l2e(c,0) = max(min(qflx_adv_l2e(c,0),20.0/dt),-10.0/dt)
 
               ! Make it so lateral flux of water in (from tides) comes in from the top instead of straight to lowest unsaturated layer
               tot_tidal_inflow = 0.0_r8 ! units of mm (not mm/s)
+              if(qflx_adv_l2e(c,0) > sum(qflx_drain_l2e(c,1:nlevdecomp))/dt+tot_tidal_outflow/dt) then
+                tot_tidal_inflow = qflx_adv_l2e(c,0) - sum(qflx_drain_l2e(c,1:nlevdecomp))/dt+tot_tidal_outflow/dt
+                qflx_adv_l2e(c,0) = sum(qflx_drain_l2e(c,1:nlevdecomp))/dt+tot_tidal_outflow/dt
+              endif
               do j=2,nlevdecomp
                 if(qflx_lat_aqu_l2e(c,j) > 0) then
                   tot_tidal_inflow = tot_tidal_inflow + qflx_lat_aqu_l2e(c,j)
