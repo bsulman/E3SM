@@ -64,6 +64,7 @@ contains
          qflx_adv           => col_wf%qflx_adv           , &
          qflx_lat_aqu_layer => col_wf%qflx_lat_aqu_layer , &
          qflx_drain         => col_wf%qflx_drain         , &
+         qflx_infl          => col_wf%qflx_infl          , &
          qflx_drain_vr      => col_wf%qflx_drain_vr        &
          )
 
@@ -107,6 +108,13 @@ contains
              do fc = 1, num_filter
                 c = filter(fc)
                 cur_data%data_real_1d(c) = qflx_drain(c)
+             enddo
+             cur_data%is_set = .true.
+
+         case (L2E_FLUX_SOIL_QFLX_INFL)
+             do fc = 1, num_filter
+                c = filter(fc)
+                cur_data%data_real_1d(c) = qflx_infl(c)
              enddo
              cur_data%is_set = .true.
 

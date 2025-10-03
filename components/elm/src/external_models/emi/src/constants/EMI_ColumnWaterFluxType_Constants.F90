@@ -7,5 +7,6 @@ module EMI_ColumnWaterFluxType_Constants
   integer, parameter, public :: L2E_FLUX_SOIL_QFLX_LAT_COL   = 0502
   integer, parameter, public :: L2E_FLUX_SOIL_QFLX_DRAIN     = 0503
   integer, parameter, public :: L2E_FLUX_SOIL_QFLX_DRAIN_VR  = 0504
+  integer, parameter, public :: L2E_FLUX_SOIL_QFLX_INFL      = 0505
 
 end module EMI_ColumnWaterFluxType_Constants

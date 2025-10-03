@@ -62,6 +62,7 @@ module ExternalModelAlquimiaMod
     integer :: index_l2e_flux_plantNdemand
     integer :: index_l2e_flux_qflx_adv
     integer :: index_l2e_flux_qflx_lat_aqu_layer
+    integer :: index_l2e_flux_qflx_infl
     integer :: index_l2e_state_wtd
     integer :: index_l2e_state_h2osfc
     integer :: index_l2e_state_tide_height
@@ -376,6 +377,10 @@ contains
     id                                   = L2E_FLUX_SOIL_QFLX_DRAIN_VR
     call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
     this%index_l2e_flux_qflx_drain      = index
+
+    id                                   = L2E_FLUX_SOIL_QFLX_INFL
+    call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
+    this%index_l2e_flux_qflx_infl      = index
 
     id                                   = L2E_STATE_SALINITY_COL
     call l2e_list%AddDataByID(id, number_em_stages, em_stages, index)
@@ -983,7 +988,7 @@ end subroutine EMAlquimia_Coldstart
     real(r8) , pointer, dimension(:,:,:) :: aux_doubles_l2e , aux_doubles_e2l
     integer  , pointer, dimension(:,:,:)   :: aux_ints_l2e, aux_ints_e2l
     real(r8) , pointer, dimension(:,:)    :: qflx_adv_l2e, qflx_lat_aqu_l2e, qflx_drain_l2e
-    real(r8) , pointer, dimension(:)      :: flood_salinity_l2e, flood_nitrate_l2e, h2osfc_l2e, wtd_l2e, tide_height_l2e
+    real(r8) , pointer, dimension(:)      :: flood_salinity_l2e, flood_nitrate_l2e, h2osfc_l2e, wtd_l2e, tide_height_l2e, qflx_infl_l2e
     real(r8) , pointer, dimension(:,:)    :: DOC_e2l, DON_e2l, DIC_e2l, methane_vr_e2l, acetate_vr_e2l
     real(r8) , pointer, dimension(:,:)    :: pH_e2l, O2_e2l, salinity_e2l, sulfate_e2l, sulfide_e2l, Fe2_e2l, FeOxide_e2l, FeS_e2l, carbonate_e2l
     real(r8) , pointer, dimension(:)     :: actual_dt_e2l
@@ -1089,6 +1094,7 @@ end subroutine EMAlquimia_Coldstart
     call l2e_list%GetPointerToReal2D(this%index_l2e_flux_qflx_adv       , qflx_adv_l2e     )
     call l2e_list%GetPointerToReal2D(this%index_l2e_flux_qflx_lat_aqu_layer    , qflx_lat_aqu_l2e     ) ! ELM units are mm/m2 (integrated over time step)
     call l2e_list%GetPointerToReal2D(this%index_l2e_flux_qflx_drain    , qflx_drain_l2e     )
+    call l2e_list%GetPointerToReal1D(this%index_l2e_flux_qflx_infl    , qflx_infl_l2e     )
 
     call l2e_list%GetPointerToReal1D(this%index_l2e_state_wtd       , wtd_l2e     )
     call l2e_list%GetPointerToReal1D(this%index_l2e_state_h2osfc    , h2osfc_l2e  )
@@ -1381,12 +1387,12 @@ end subroutine EMAlquimia_Coldstart
               qflx_adv_l2e(c,1:nlevdecomp-1) = max(sum(qflx_drain_l2e(c,1:nlevdecomp))/dt+tot_tidal_outflow/dt,-10.0/dt)
               qflx_adv_l2e(c,nlevdecomp) = 0.0_r8
               ! qflx_adv_l2e(c,0) = max(min(qflx_adv_l2e(c,0),sum(qflx_drain_l2e(c,1:nlevdecomp))/dt+tot_tidal_outflow/dt),-10.0/dt)
-              qflx_adv_l2e(c,0) = max(min(qflx_adv_l2e(c,0),20.0/dt),-10.0/dt)
+              ! qflx_adv_l2e(c,0) = max(min(qflx_adv_l2e(c,0),200.0/dt),-10.0/dt)
 
               ! Make it so lateral flux of water in (from tides) comes in from the top instead of straight to lowest unsaturated layer
-              tot_tidal_inflow = 0.0_r8 ! units of mm (not mm/s)
+              tot_tidal_inflow = qflx_infl_l2e(c)*dt ! units of mm (not mm/s)
               if(qflx_adv_l2e(c,0) > sum(qflx_drain_l2e(c,1:nlevdecomp))/dt+tot_tidal_outflow/dt) then
-                tot_tidal_inflow = qflx_adv_l2e(c,0) - sum(qflx_drain_l2e(c,1:nlevdecomp))/dt+tot_tidal_outflow/dt
+                ! tot_tidal_inflow = tot_tidal_inflow + qflx_adv_l2e(c,0)*dt - (sum(qflx_drain_l2e(c,1:nlevdecomp))+tot_tidal_outflow)
                 qflx_adv_l2e(c,0) = sum(qflx_drain_l2e(c,1:nlevdecomp))/dt+tot_tidal_outflow/dt
               endif
               do j=2,nlevdecomp
@@ -1396,9 +1402,15 @@ end subroutine EMAlquimia_Coldstart
                 endif
               enddo
               do j=1,nlevdecomp
-                if(tot_tidal_inflow <= 0.0) exit
-                qflx_lat_aqu_l2e(c,j) = qflx_lat_aqu_l2e(c,j) + min(tot_tidal_inflow,dz(c,j)*porosity_l2e(c,j)*1e3_r8)
-                tot_tidal_inflow = tot_tidal_inflow - min(tot_tidal_inflow,dz(c,j)*porosity_l2e(c,j)*1e3_r8)
+                if(tot_tidal_inflow > 0.0) then
+                  qflx_lat_aqu_l2e(c,j) = qflx_lat_aqu_l2e(c,j) + min(tot_tidal_inflow,dz(c,j)*1e3_r8*max(porosity_l2e(c,j)-(h2o_liqvol(c,j)+h2o_icevol(c,j)),0.25_r8)*dt/3600_r8)
+                  tot_tidal_inflow = tot_tidal_inflow - min(tot_tidal_inflow,dz(c,j)*1e3_r8*max(porosity_l2e(c,j)-(h2o_liqvol(c,j)+h2o_icevol(c,j)),0.25_r8)*dt/3600_r8)
+                elseif (tot_tidal_outflow > 0.0) then
+                  ! I think this is double counting
+                  qflx_lat_aqu_l2e(c,j) = qflx_lat_aqu_l2e(c,j) - min(tot_tidal_outflow,dz(c,j)*1e3_r8*max(porosity_l2e(c,j),0.25_r8)*dt/3600_r8)
+                  tot_tidal_outflow = tot_tidal_outflow - min(tot_tidal_outflow,dz(c,j)*1e3_r8*max(porosity_l2e(c,j),0.25_r8)*dt/3600_r8)
+                endif
+
               enddo
 
               ! Do drainage above frozen layer
@@ -1407,7 +1419,7 @@ end subroutine EMAlquimia_Coldstart
                 if(liq_frac(j)<0.5) then
                   qflx_adv_l2e(c,j) = 0.0_r8
                 endif
-                  qflx_lat_aqu_l2e(c,j) = qflx_lat_aqu_l2e(c,j) - (qflx_adv_l2e(c,j-1)-qflx_adv_l2e(c,j))*dt
+                  qflx_lat_aqu_l2e(c,j) = qflx_lat_aqu_l2e(c,j) - (qflx_adv_l2e(c,j-1)-qflx_adv_l2e(c,j))*dt - qflx_drain_l2e(c,j)
               enddo
 
 
@@ -2813,9 +2825,9 @@ subroutine run_vert_transport(this,actual_dt, total_mobile, free_mobile, &
       ! lat_bc in units of mol/m3 H2O
       ! source_term in mol/m3 bulk/s
       if(lat_flow(j) > 0) then
-        source_term(j,k) = lat_flow(j)*1e-3_r8 * lat_bc(k)*porosity(j)*sat(j) ! mol/m3 bulk/s
+        source_term(j,k) = lat_flow(j)/dzsoi_decomp(j)*1e-3_r8 * lat_bc(k)*porosity(j) ! mol/m3 bulk/s
       else
-        source_term(j,k) = lat_flow(j)*1e-3_r8 * total_mobile(j,k)*dissolved_frac(j)
+        source_term(j,k) = lat_flow(j)/dzsoi_decomp(j)*1e-3_r8 * total_mobile(j,k)*dissolved_frac(j)
         ! source_term(j,k) = lat_flow(c,j)*1e-3_r8 * total_mobile(c,j,k) * 0.01_r8 ! Assume components not specified by salinity are in equilibrium for subsurface flow
       endif
       lat_flux_step(k) = lat_flux_step(k) + source_term(j,k)*dzsoi_decomp(j)*actual_dt
