@@ -793,30 +793,30 @@ contains
 !
 !-----------------------------------------------------------------------
 !
-   write(p_logunit,*) 'japg1 ============================> perf_mod.F90/t_stropf', timing_initialized
+   
 
    if (.not. timing_initialized) return ! japg [03-03-2025] ====> Explanation: If timing_initialized is FALSE (not initialized), then exit the subroutine immediately.
 
-   write(p_logunit,*) 'japg2 ============================> perf_mod.F90/t_stropf', timing_initialized
+   
 
    if (timing_disable_depth > 0) return
    
-   write(p_logunit,*) 'japg3 ============================> perf_mod.F90/t_stropf', timing_disable_depth
+   
 
 #ifdef NUOPC_INTERFACE
 #if ( defined _OPENMP )
-      write(p_logunit,*) 'japg4 ============================> perf_mod.F90/t_stropf'
+      
    if (omp_in_parallel()) return
-      write(p_logunit,*) 'japg5 ============================> perf_mod.F90/t_stropf'
+      
 
 #endif
 #endif
 
-write(p_logunit,*) 'japg6 ============================> perf_mod.F90/t_stropf'
+
 
 !$OMP MASTER
 
-write(p_logunit,*) 'japg7 ============================> perf_mod.F90/t_stropf', perf_ovhd_measurement
+
 
    if (perf_ovhd_measurement) then
 #ifdef HAVE_MPI
@@ -830,21 +830,21 @@ write(p_logunit,*) 'japg7 ============================> perf_mod.F90/t_stropf', 
    endif
 #ifdef NUOPC_INTERFACE
 
-   write(p_logunit,*) 'japg8 ============================> perf_mod.F90/t_stropf'
+   
 
    cur_timing_depth = cur_timing_depth - 1
    if(cur_timing_depth < timer_depth_limit) then
-      write(p_logunit,*) 'japg9 ============================> perf_mod.F90/t_stropf', cur_timing_depth
+      
 #else
 !$OMP END MASTER
 #endif
       if ((perf_add_detail) .AND. (cur_timing_detail < 100)) then
          write(cdetail,'(i2.2)') cur_timing_detail
-         write(p_logunit,*) 'japg10 ============================> perf_mod.F90/t_stropf'
+         
          str_length = min(SHR_KIND_CM-3,len_trim(event), len(event)) ! japg [03-31-2025]  => I added str_length = min(SHR_KIND_CM - 3, len_trim(event), len(event))
          TIMERSTOP(event(1:str_length)//'_'//cdetail)
       else
-         write(p_logunit,*) 'japg11 ============================> perf_mod.F90/t_stropf'
+         
          str_length = min(SHR_KIND_CM,len_trim(event), len(event)) ! japg [03-31-2025]  => I added str_length = min(SHR_KIND_CM - 3, len_trim(event), len(event))
          TIMERSTOP(event(1:str_length))
       endif
@@ -852,12 +852,12 @@ write(p_logunit,*) 'japg7 ============================> perf_mod.F90/t_stropf', 
 !$OMP MASTER
 #endif
       if (perf_ovhd_measurement) then
-         write(p_logunit,*) 'japg12 ============================> perf_mod.F90/t_stropf'
+         
 #ifdef HAVE_MPI
 
 #else
          ierr = GPTLstamp(ovhd_stop, usr, sys)
-         write(p_logunit,*) 'japg13 ============================> perf_mod.F90/t_stropf'
+         
 #endif
          perf_timing_ovhd = perf_timing_ovhd + ovhd_stop
       endif
@@ -865,9 +865,9 @@ write(p_logunit,*) 'japg7 ============================> perf_mod.F90/t_stropf', 
    endif
 #endif
 !$OMP END MASTER
-   write(p_logunit,*) 'japg14 ============================> perf_mod.F90/t_stropf'
+
    return
-   write(p_logunit,*) 'japg15 ============================> perf_mod.F90/t_stropf'
+   
    end subroutine t_stopf
 !
 !========================================================================
@@ -907,10 +907,10 @@ write(p_logunit,*) 'japg7 ============================> perf_mod.F90/t_stropf', 
 !
 !-----------------------------------------------------------------------
 !
-   write(p_logunit,*) 'japg16 ============================> perf_mod.F90/t_stropf', timing_initialized, timing_disable_depth
+   
    if (.not. timing_initialized) return
    if (timing_disable_depth > 0) return
-   write(p_logunit,*) 'japg17 ============================> perf_mod.F90/t_stropf'
+   
 
 !$OMP MASTER
    if (perf_ovhd_measurement) then

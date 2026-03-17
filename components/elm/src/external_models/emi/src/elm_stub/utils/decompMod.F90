@@ -385,7 +385,7 @@ contains
         call shr_sys_abort( trim(subname)//' ERROR: Calling from inside  a threaded region')
      end if
 #endif
-     write(iulog,*) 'japg1 ================================> decompMod.F90/get_proc_bounds_new'
+     
      bounds%begp = procinfo%begp
      bounds%endp = procinfo%endp
      bounds%begc = procinfo%begc
@@ -396,7 +396,7 @@ contains
      bounds%endt = procinfo%endt
      bounds%begg = procinfo%begg
      bounds%endg = procinfo%endg
-     write(iulog,*) 'japg2 ================================> decompMod.F90/get_proc_bounds_new', begc, endc
+     
 
      ! Ghost
      bounds%begp_ghost = procinfo%begp_ghost
@@ -441,7 +441,7 @@ contains
      integer, optional, intent(out) :: begg, endg  ! proc beg and end gridcell indices
      integer, optional, intent(out) :: begCohort, endCohort  ! cohort beg and end gridcell indices
      !------------------------------------------------------------------------------
-     write(iulog,*) 'japg1 ================================> decompMod.F90/get_proc_bounds_old'
+     
      if (present(begp)) begp = procinfo%begp
      if (present(endp)) endp = procinfo%endp
      if (present(begc)) begc = procinfo%begc
@@ -454,7 +454,7 @@ contains
      if (present(endg)) endg = procinfo%endg
      if (present(begCohort)) begCohort = procinfo%begCohort
      if (present(endCohort)) endCohort = procinfo%endCohort
-     write(iulog,*) 'japg2 ================================> decompMod.F90/get_proc_bounds_old' begc, endc
+     
    end subroutine get_proc_bounds_old
 
    !------------------------------------------------------------------------------

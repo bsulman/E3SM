@@ -7,7 +7,7 @@ module SoilHydrologyMod
   use shr_kind_mod      , only : r8 => shr_kind_r8
   use shr_log_mod       , only : errMsg => shr_log_errMsg
   use decompMod         , only : bounds_type
-  use elm_varctl        , only : iulog, use_vichydro, japglog
+  use elm_varctl        , only : iulog, use_vichydro, japglog, japgprint
   use elm_varcon        , only : e_ice, denh2o, denice, rpi
   use EnergyFluxType    , only : energyflux_type
   use SoilHydrologyType , only : soilhydrology_type
@@ -167,11 +167,11 @@ contains
          )
 
       ! Get time step
-      write(japglog,*) 'SurfaceRunoff'
+      
 
 #if (defined COL4TH)
          
-! japg [09-04-2025]: Probabilty of saturation ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+! japg [09-04-2025]: This is to estimated Probabilty of saturation (status: No implemented yet) ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
       
          ! (1) Fixed coordenates are needed to estimate slopes. These coordenates come from field measurements *******************************************************************
 
@@ -196,14 +196,11 @@ contains
             slope_fixed_coor(fi) = (fixed_col_elevetions(fi)-fixed_col_elevetions(fi+1)) / dist_fixed_col(fi) ! japg [08-13-2025] slope from upland to wetland
          end do                                 
          
-
          ! (2) Estimation of elevation using interpolated coordenates from OLMT and sloples from (1) *******************************************************************
-
          
          do ic = 1, num_hydrologyc                  
                   if (loncoor(ic) > 180.0_r8) loncoor(ic) = loncoor(ic) - 360.0_r8
          end do
-
 
          lat_rad = latcoor * (acos(-1.0_r8) / 180.0_r8)
          lon_rad = loncoor * (acos(-1.0_r8) / 180.0_r8)         
@@ -254,7 +251,7 @@ contains
          end do          
 #endif
 
-   ! japg [09-04-2025]: Probabilty of saturation ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+   ! japg [09-04-2025]: This is to estimated Probabilty of saturation (status: No implemented yet) ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
 
       do fc = 1, num_hydrologyc
@@ -321,12 +318,14 @@ contains
 
 #if (defined COL4TH)
 
-         write(japglog,*) 'SurfaceRunoof/ Index c = ', c
+         ! write(japglog,*) 'SurfaceRunoof/ Index c = ', c
          if (c .eq. 1) fsat(c) = 1.0 * exp(-3.0_r8/(humhol_ht*humhol_ht_frac)*(zwt(c)))   !at 30cm, hummock saturated at 5% changed to 0.1 TAO                                   ! upland
          if (c .eq. 2) fsat(c) = 1.0 * exp(-3.0_r8/(humhol_ht*humhol_ht_2frac)*(zwt(c)))  ! ==========> japg [06-04-2025]                                                        ! transition
          if (c .eq. 3) fsat(c) = 1.0 * exp(-3.0_r8/(humhol_ht)*(zwt(c)))   !at 30cm, hummock saturated at 5% changed to 0.1 TAO                                                  ! wetland
          if (c .eq. 4) fsat(c) = min(1.0 * exp(-3.0_r8/(humhol_ht)*(zwt(c)-h2osfc(c)/1000.+humhol_ht)), 1._r8) !TAO 0.3 t0 0.1, 0.15 to 0.35 !bsulman: what does 0.15 represent? ! open water
          
+         ! japg [01-06-2026] => The intention here is to use the elevations_cols instead of humhol_ht for general multi-columns (status: It still needs more testing.) ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+
          ! if (c .eq. 1) fsat(c) = 1.0 * exp(-3.0_r8/elevations_cols(1)*(zwt(c)))
          ! if (c .eq. 2) fsat(c) = 1.0 * exp(-3.0_r8/elevations_cols(2)*(zwt(c)))
          ! if (c .eq. 3) fsat(c) = 1.0 * exp(-3.0_r8/elevations_cols(3)*(zwt(c)))
@@ -347,34 +346,28 @@ contains
          ! if (c .lt. num_hydrologyc) fsat(c) = 1.0 * exp(-3.0_r8/elevations_cols(c)*(zwt(c)))
          ! if (c .eq. num_hydrologyc) fsat(c) =  min(1.0 * exp(-3.0_r8/(elevations_cols(c))*(zwt(c)-h2osfc(c)/1000.+elevations_cols(c))), 1._r8)
 
-
-         write(japglog,*) 'SurfaceRunoof/ after computing fsat +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
+         ! write(japglog,*) 'SurfaceRunoof/ after computing fsat +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
          ! write(japglog,*) 'SurfaceRunoof/ VALUES OF humhols_ht ---------'
          ! write(japglog,*) 'SurfaceRunoof/humhol_ht = ', humhol_ht
          ! write(japglog,*) 'SurfaceRunoof/humhol_ht_frac = ', humhol_ht_frac
          ! write(japglog,*) 'SurfaceRunoof/humhol_ht_2frac = ', humhol_ht_2frac
 
-         write(japglog,*) 'SurfaceRunoof/ VALUES OF elevations for all ------------------'
-         write(japglog,*) 'SurfaceRunoof/ vector of humhols =', [humhol_ht*humhol_ht_frac, humhol_ht*humhol_ht_2frac, humhol_ht, 0.0_r8] 
-         write(japglog,*) 'SurfaceRunoof/elevations = ', elevations_cols                 
-         
+         ! write(japglog,*) 'SurfaceRunoof/ VALUES OF elevations for all ------------------'
+         ! write(japglog,*) 'SurfaceRunoof/ vector of humhols =', [humhol_ht*humhol_ht_frac, humhol_ht*humhol_ht_2frac, humhol_ht, 0.0_r8] 
+         ! write(japglog,*) 'SurfaceRunoof/elevations = ', elevations_cols                          
 
          ! write(japglog,*) 'SurfaceRunoof/fsat_japg                = ', fsat_japg
-         write(japglog,*) 'SurfaceRunoof/fsat                     = ', fsat(1:4)
-         write(japglog,*) 'SurfaceRunoof/ after computing fsat +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
+         ! write(japglog,*) 'SurfaceRunoof/fsat                     = ', fsat(1:4)
+         ! write(japglog,*) 'SurfaceRunoof/ after computing fsat +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
 
          ! write(japglog,*) 'SurfaceRunoof/ fsat = ',fsat
          ! write(japglog,*) 'SurfaceRunoof/ fsat_japg = ',fsat_japg
 
          ! fsat_japg(c) = 1.0 * exp(-3.0_r8/elevations_cols(c)*(zwt(c))) 
-
-
-
-
-
          
          !write(japglog,*) 'SurfaceRunoff: fsat(c) = ', fsat(c), ' column ', c, 'humhol_ht = ', humhol_ht,' humhol_ht_frac = ', humhol_ht_frac, ' humhol_ht_2frac = ', humhol_ht_2frac ! japg [07-09-2025]
 
+         ! japg [01-06-2026] => The intention here is to use the elevations_cols instead of humhol_ht for general multi-columns (status: It still needs more testing.) ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
 #endif
 
@@ -647,6 +640,7 @@ contains
      real(r8) :: dist_lon(1:num_hydrologyc-1)      ! japg [07-17-2025]
      real(r8) :: dist_col(1:num_hydrologyc-1)      ! japg [07-17-2025]
      real(r8) :: humhol_elevs(1:num_hydrologyc-1)  ! japg [07-23-2025] humhol elevvations for each column
+     real(r8) :: column_dist(1:num_hydrologyc-1)   ! japg [01-06-2026] column distance between columns 
      real(r8) :: hydhead_diff(1:num_hydrologyc-1)  ! japg [07-23-2025] hydrualic head difference between columns
      real(r8) :: hyka(1:num_hydrologyc)            ! japg [07-23-2025] Hydraulic conductivity for each column
      !real(r8) :: seg_qflx_lat_aqu(1:num_hydrologyc-1)  ! japg [07-23-2025] segement lateral fluxes
@@ -681,6 +675,7 @@ contains
           qflx_gross_evap_soil =>    col_wf%qflx_gross_evap_soil , & ! Output: [real(r8) (:)] gross evaporation (mm H2O/s)
           qflx_lat_aqu         =>    col_wf%qflx_lat_aqu         , & ! Output: [real(r8) (:,:) ] total lateral flow
           seg_qflx_lat_aqu     =>    col_wf%seg_qflx_lat_aqu     , & ! Output: [real(r8) (:,:) ] total lateral flow japg [11-20-2025]
+          tidal_channel        =>    col_wf%tidal_channel        , & ! Output: [real(r8) (:,:) ] Surface water elevation tide (input) [01-05-2026]
           qflx_tide            =>    col_wf%qflx_tide            , & ! Output: [real(r8) (:,:) ]
           qflx_lat_aqu_layer   =>    col_wf%qflx_lat_aqu_layer   , & ! Output: [real(r8) (:,:) ] lateral flow for each layer
           qflx_surf_input      =>    col_wf%qflx_surf_input      , & ! Output: [real(r8) (:,:) ] Input to hollowInput to hollow from hummock surface runoff
@@ -1062,9 +1057,9 @@ contains
                   h2osfc_tide = (atm2lnd_vars%tide_height(1,1+mod(int((days*secspday+seconds)/3600),atm2lnd_vars%tide_forcing_len)))*1000 !*1000 converts from m to mm SL 5-5-22
                   col_ws%salinity(c) = atm2lnd_vars%tide_salinity(1,1+mod(int((days*secspday+seconds)/3600),atm2lnd_vars%tide_forcing_len))
                   salinity(1) = col_ws%salinity(c)
-                  write(iulog,*) h2osfc_tide
+                  ! write(iulog,*) h2osfc_tide japg [02-09-2026]
 #endif
-               else
+               elsez
                   do ii=1,num_tide_comps
                      !h2osfc_tide =    h2osfc_tide    +  tide_coeff_amp(ii) * sin(2.0_r8*SHR_CONST_PI*(1/tide_coeff_period(ii)*(days*secspday+seconds) + tide_coeff_phase(ii)))
                      !equation editted by Wei Huang on 7/7/2022
@@ -1075,9 +1070,7 @@ contains
                 h2osfc_tide = max(h2osfc_tide + tide_baseline, 0.0)
                !  qflx_tide(c) = (h2osfc(c)-h2osfc_before)/dtime
                 qflx_lat_aqu(2) = qflx_lat_aqu(2) + (h2osfc_tide-h2osfc(c))/dtime   
-                write(iulog,*), 'qflx_lat_aqu(1)', qflx_lat_aqu(1)
-                write(iulog,*), 'qflx_lat_aqu(2)', qflx_lat_aqu(2)
-                write(iulog,*), 'h2osfc(c)', h2osfc(1), h2osfc(2)                
+            
                 ! If flooded water surface of one column is higher than the other, add faster flow since aquifer transfer (ka parameters) is slow
                 if(h2osfc(2)>0 .and. h2osfc(2)>(h2osfc(1)+humhol_ht*1000.0)) then
                   qflx_lat_aqu(2) = qflx_lat_aqu(2) - min((h2osfc(2)-(h2osfc(1)+humhol_ht*1000.0))*sfcflow_ratescale,h2osfc(2)*0.5/dtime)
@@ -1086,15 +1079,13 @@ contains
                   qflx_lat_aqu(2) = qflx_lat_aqu(2) + min((h2osfc(1)-(h2osfc(2)-humhol_ht*1000.0))*sfcflow_ratescale,h2osfc(1)*0.5/dtime)
                   qflx_lat_aqu(1) = qflx_lat_aqu(1) - min((h2osfc(1)-(h2osfc(2)-humhol_ht*1000.0))*sfcflow_ratescale,h2osfc(1)*0.5/dtime)
                 endif
-                write(iulog,*), 'qflx_lat_aqu(1) after', qflx_lat_aqu(1)
-                write(iulog,*), 'qflx_lat_aqu(2) after', qflx_lat_aqu(2)                 
-                write(iulog,*), 'h2osfc(c) after', h2osfc(1), h2osfc(2) 
+
 #endif
              endif
 #endif
 
 #if (defined COL3RD)
-             write(iulog,*), 'SoilHydro -> col3rd_num_hydrologyc = ', num_hydrologyc ! ====================================> japg [04-23-2025]
+            !  write(iulog,*), 'SoilHydro -> col3rd_num_hydrologyc = ', num_hydrologyc ! ====================================> japg [04-23-2025]
              if(num_hydrologyc .ne. 3) call endrun(msg="Error: Must have 3 columns if COL3RD is defined")
              !compute lateral flux in aquifer
              if (jwt(c) .lt. nlevbed) then
@@ -1165,7 +1156,7 @@ contains
                call get_curr_time(days, seconds)
                h2osfc_tide = 0.0_r8
                if(tide_file .ne. ' ') then
-               write(iulog,*),'current_time:',days,seconds
+               ! write(iulog,*),'current_time:',days,seconds
                
 #ifdef CPL_BYPASS
                   ! If external forcing tide file is specified then use that via coupler bypass
@@ -1219,9 +1210,8 @@ contains
                write(iulog,*), 'h2osfc_tide_final:',h2osfc_tide 
                 h2osfc_tide = max(h2osfc_tide + tide_baseline, 0.0)
                !  qflx_tide(c) = (h2osfc(c)-h2osfc_before)/dtime
-                qflx_lat_aqu(3) = qflx_lat_aqu(3) + (h2osfc_tide-h2osfc(c))/dtime                      ! japg [11-20-2025] Why did you add surface water to net lateral aquifer flow ????
-                write(iulog,*), 'qflx_lat_aqu(c)', qflx_lat_aqu(1), qflx_lat_aqu(2), qflx_lat_aqu(3)
-                write(iulog,*), 'h2osfc(c)', h2osfc(1), h2osfc(2), h2osfc(3)
+                qflx_lat_aqu(3) = qflx_lat_aqu(3) + (h2osfc_tide-h2osfc(c))/dtime   ! japg [11-20-2025] Why did you add surface water to net lateral aquifer flow ????
+
                 ! If flooded water surface of one column is higher than the other, add faster flow since aquifer transfer (ka parameters) is slow
                 if(h2osfc(3)>0 .and. h2osfc(3)>(h2osfc(2)+humhol_ht*1000.0)) then
                   qflx_lat_aqu(3) = qflx_lat_aqu(3) - min((h2osfc(3)-(h2osfc(2)+humhol_ht*1000.0))*sfcflow_ratescale,h2osfc(3)*0.5/dtime)
@@ -1244,17 +1234,16 @@ contains
                      qflx_lat_aqu(1) = qflx_lat_aqu(1) - min(((h2osfc(1)+humhol_ht*humhol_ht_frac*1000.0)-h2osfc(2)-humhol_ht*1000.0)*sfcflow_ratescale,h2osfc(1)*0.5/dtime)
                   endif
                 endif
-                write(iulog,*), 'qflx_lat_aqu(1) after', qflx_lat_aqu(1), qflx_lat_aqu(2), qflx_lat_aqu(3)
+                
 
              endif
 #endif
 
 
-
 ! japg [04-17-2025] START COL4TH ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 
 #if (defined COL4TH)
-             write(iulog,*), 'japg1 [04-28-2025] ===============> SoilHydrologyMod.F90/Infiltration,  num_hydrologyc = ', num_hydrologyc ! ==========> japg [04-23-2025]
+            !  write(iulog,*), 'japg1 [04-28-2025] ===============> SoilHydrologyMod.F90/Infiltration,  num_hydrologyc = ', num_hydrologyc ! ==========> japg [04-23-2025]
              
              if(num_hydrologyc .ne. 4) call endrun(msg="Error: Must have 4 columns if COL4TH is defined")
              !compute lateral flux in aquifer
@@ -1340,16 +1329,17 @@ contains
                      end if 
                   end do
 
-
-                  !write(japglog,*) 'humhol_elevs = ', humhol_elevs
-                  !write(japglog,*) 'hydhead_diff = ', hydhead_diff
-
                   ! 2. Compute segment lateral fluxes based on hydraulic head differences and horizontal distance
 
                   hyka = [ka_hu3, ka_hu2, ka_hu1, ka_ho] ! japg [07-23-2025] vector of hydraulic conductivities
 
+                  ! column_dist = dist_col     ! japg [01-06-2026] This recovers the use of the variable dist_col defined from coordenates. 
+                  column_dist = [52.42, 92.23, 214.97]  ! japg [01-06-2026] This allows configurate any distances in meters (m). The real distances are [52.424163372210103, 92.230184176547084, 214.97243356317188] => [upland~transition, transition~wetland, wetland~openwater]
+                  ! column_dist = [52.42, 92.23, 50.0]  ! japg [01-07-2026] &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& ============================================> Distance For Sensitivity
+
                   do ic = 1, num_hydrologyc-1                     
-                        seg_qflx_lat_aqu(ic) = -((hyka(ic)+hyka(ic+1))/2) * (hydhead_diff(ic) / dist_col(ic)) 
+                        seg_qflx_lat_aqu(ic) = -((hyka(ic)+hyka(ic+1))/2) * (hydhead_diff(ic) / column_dist(ic)) 
+                        ! seg_qflx_lat_aqu(ic) =  0   ! &&&&&&&&&&&&&&&&&&&&&& ===============================> Turn off segmenta lateral flows
                   end do
 
                   ! 3. Compute net flow at each column
@@ -1358,36 +1348,29 @@ contains
                   do ic = 2, num_hydrologyc-1
                      qflx_lat_aqu(ic) = seg_qflx_lat_aqu(ic-1) - seg_qflx_lat_aqu(ic) * sqrt(hol_frac/hum_frac) ! japg [07-23-2025] Interior columns (transitional)
                   end do
-                  qflx_lat_aqu(num_hydrologyc) = seg_qflx_lat_aqu(num_hydrologyc-1)  * sqrt(hum_frac/hol_frac)   ! japg [07-23-2025] last column (tidal marsh)
-                  
+                  qflx_lat_aqu(num_hydrologyc) = seg_qflx_lat_aqu(num_hydrologyc-1)  * sqrt(hum_frac/hol_frac)   ! japg [07-23-2025] last column (tidal marsh)          
 
+                  ! write(japglog,*) 'Lateral Fluxes japg +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
+                  ! write(japglog,*) 'zwt = ', zwt(1:num_hydrologyc)
+                  ! write(japglog,*) 'h2osfc = ', h2osfc(1:num_hydrologyc)
+                  ! write(japglog,*) 'humhol_elevs = ', humhol_elevs
+                  ! write(japglog,*) 'seg_qflx_lat_aqu = ', seg_qflx_lat_aqu(1:num_hydrologyc)   
+                  ! write(japglog,*) 'dist_col = ', dist_col   
+                  ! write(japglog,*) 'column_dist = ', column_dist   
 
-                  ! japg [11-17-2025]: Turn off lateral flow for testing ++++++++++++++++++++++++++++++++++++++++++++++++
-                  ! qflx_lat_aqu(1) = 0.0_r8
-                  ! qflx_lat_aqu(2) = 0.0_r8
-                  ! qflx_lat_aqu(3) = 0.0_r8
-                  ! qflx_lat_aqu(4) = 0.0_r8
-                  ! japg [11-17-2025]: Turn off lateral flow for testing +++++++++++++++++++++++++++++++++++++++++++++++++
-
-
-                  write(japglog,*) 'zwt = ', zwt(1:num_hydrologyc)
-                  write(japglog,*) 'h2osfc = ', h2osfc(1:num_hydrologyc)
-                  write(japglog,*) 'humhol_elevs = ', humhol_elevs
-                  write(japglog,*) 'seg_qflx_lat_aqu = ', seg_qflx_lat_aqu
-                  write(japglog,*) 'hol_frac = ', hol_frac, 'hum_frac = ', hum_frac, 'sqrt(hol_frac/hum_frac) =', sqrt(hol_frac/hum_frac)
+                  !  write(japglog,*) 'hol_frac = ', hol_frac, 'hum_frac = ', hum_frac, 'sqrt(hol_frac/hum_frac) =', sqrt(hol_frac/hum_frac)
                   !write(japglog,*) 'qflx_lat_aqu = ', qflx_lat_aqu(1:num_hydrologyc)             
 
                  
-                 ! japg [07-22-2025]: lateral flux ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
-                 
+                 ! japg [07-22-2025]: lateral flux ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑                 
                  
                !   qflx_lat_aqu(1) =  2._r8/(1._r8/ka_hu1+1._r8/ka_ho) * (zwt_hu1-zwt_ho-humhol_ht*humhol_ht_frac) / humhol_dist * sqrt(hol_frac/hum_frac)
                !   qflx_lat_aqu(2) =  2._r8/(1._r8/ka_hu2+1._r8/ka_ho) * (zwt_hu2-zwt_ho-humhol_ht) / humhol_dist * sqrt(hol_frac/hum_frac)
                !   qflx_lat_aqu(3) =  2._r8/(1._r8/ka_hu3+1._r8/ka_ho) * (zwt_hu2-zwt_ho-humhol_ht) / humhol_dist * sqrt(hol_frac/hum_frac)
                !   qflx_lat_aqu(4) = -2._r8/(1._r8/ka_hu3+1._r8/ka_ho) * (zwt_hu2-zwt_ho-humhol_ht) / humhol_dist * sqrt(hum_frac/hol_frac)
                   
-                 write(japglog,*) 'qflx_lat_aqu = ', qflx_lat_aqu(1:num_hydrologyc)   
-
+               !   write(japglog,*) 'qflx_lat_aqu = ', qflx_lat_aqu(1:num_hydrologyc)   
+               !   write(japglog,*) 'Lateral Fluxes japg +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
 
                  !salinity(1) = 25._r8 + 20_r8*qflx_lat_aqu(2)*dtime
                  !salinity(1) = 0._r8
@@ -1399,8 +1382,9 @@ contains
 #ifdef COL4TH
                call get_curr_time(days, seconds)
                h2osfc_tide = 0.0_r8
-               if(tide_file .ne. ' ') then
-               write(iulog,*),'current_time:',days,seconds
+               if(tide_file .ne. ' ') then        ! If tide file is not blank, then execute the following code block
+               
+
                
 #ifdef CPL_BYPASS
                   ! If external forcing tide file is specified then use that via coupler bypass
@@ -1414,7 +1398,7 @@ contains
                      tide_time_idx=1+int((days*secspday+seconds)/3600+16216800-atm2lnd_vars%tide_time(1)*24)
                      write(iulog,*),'tide_time_idx:',tide_time_idx
                      if(tide_time_idx<atm2lnd_vars%tide_forcing_len) then
-                        h2osfc_tide = (atm2lnd_vars%tide_height(1,tide_time_idx))*1000 !convert m to mm
+                        h2osfc_tide = (atm2lnd_vars%tide_height(1,tide_time_idx))*1000 !convert m to mm japg [01-05-2026] why mixing unites in a code ????
                         col_ws%salinity(c) = atm2lnd_vars%tide_salinity(1,1+tide_time_idx)
                         salinity(1) = col_ws%salinity(c)
                         salinity(2) = salinity(1)
@@ -1428,7 +1412,7 @@ contains
                         salinity(3) = salinity(2)
                         h2osfc_tide = 0.0_r8
                         do ii=1,num_tide_comps
-                           h2osfc_tide =    h2osfc_tide    +  tide_coeff_amp(ii) * sin(2.0_r8*SHR_CONST_PI/tide_coeff_period(ii)*(days*secspday+seconds)/360 + tide_coeff_phase(ii))
+                           h2osfc_tide =    h2osfc_tide    +  tide_coeff_amp(ii) * sin(2.0_r8*SHR_CONST_PI/tide_coeff_period(ii)*(days*secspday+seconds)/360 + tide_coeff_phase(ii))  !===> japg [01-05-2026] This is the original                            
                         enddo
                         write(iulog,*), 'h2osfc_tide1_2:',h2osfc_tide
                         write(iulog,*), 'tide_salinity_2:',salinity(1)
@@ -1440,7 +1424,7 @@ contains
                      salinity(3) = salinity(2)
                      h2osfc_tide = 0.0_r8
                      do ii=1,num_tide_comps
-                        h2osfc_tide =    h2osfc_tide    +  tide_coeff_amp(ii) * sin(2.0_r8*SHR_CONST_PI/tide_coeff_period(ii)*(days*secspday+seconds)/360 + tide_coeff_phase(ii))
+                        h2osfc_tide =    h2osfc_tide    +  tide_coeff_amp(ii) * sin(2.0_r8*SHR_CONST_PI/tide_coeff_period(ii)*(days*secspday+seconds)/360 + tide_coeff_phase(ii)) !===> japg [01-05-2026] This is the original                         
                      enddo
                      write(iulog,*), 'h2osfc_tide2:',h2osfc_tide
                   endif
@@ -1450,18 +1434,32 @@ contains
                   do ii=1,num_tide_comps
                      !h2osfc_tide =    h2osfc_tide    +  tide_coeff_amp(ii) * sin(2.0_r8*SHR_CONST_PI*(1/tide_coeff_period(ii)*(days*secspday+seconds) + tide_coeff_phase(ii)))
                      !equation fixed by Wei Huang on 7/7/2022
-                     h2osfc_tide =    h2osfc_tide    +  tide_coeff_amp(ii) * sin(2.0_r8*SHR_CONST_PI/tide_coeff_period(ii)*(days*secspday+seconds)/360 + tide_coeff_phase(ii))
+                     h2osfc_tide =    h2osfc_tide    +  tide_coeff_amp(ii) * sin(2.0_r8*SHR_CONST_PI/tide_coeff_period(ii)*(days*secspday+seconds)/360 + tide_coeff_phase(ii))  !===> japg [01-05-2026] This is the original                      
                   enddo
                   write(iulog,*), 'h2osfc_tide3:',h2osfc_tide
                endif
-               write(iulog,*), 'h2osfc_tide_final:',h2osfc_tide 
+               
+               !  h2osfc_tide = 250.0_r8 ! japg [01-07-2026] &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& ============================================================================================================>>  For constant tidal forcing (mm)
                 h2osfc_tide = max(h2osfc_tide + tide_baseline, 0.0)
+
+               !  write(japgprint,*), h2osfc_tide  ! japg [12-12-2025]
+                tidal_channel(4) = h2osfc_tide
+
+               ! japg [3-4-2026]------------------------------------------------------------------
+
+               ! Constant salinity forcing (for testing)
+                     ! col_ws%salinity(c) = sum(atm2lnd_vars%tide_salinity)/atm2lnd_vars%tide_forcing_len  !&&&&&&&&&&&&&&& 
+                     ! salinity(1:3) = col_ws%salinity(c) ! &&&&&&&&&&&&&&&&&&
+                     ! write(japglog,*), 'japg salinity:', salinity(1)  ! &&&&&&&&&&&&&&&&&&
+
+               ! japg [3-4-2026]------------------------------------------------------------------
+
+
                !  qflx_tide(c) = (h2osfc(c)-h2osfc_before)/dtime
 
-                qflx_lat_aqu(4) = qflx_lat_aqu(4) + (h2osfc_tide-h2osfc(c))/dtime    ! japg [11-24-2025] units ?????????????????????????????????????????????????????????????????????????????????????????????????
+                qflx_lat_aqu(4) = qflx_lat_aqu(4) + (h2osfc_tide-h2osfc(c))/dtime   ! japg [11-24-2025] I do not understand this addition? two different gradients are being added together ?? :/
+                
 
-                write(iulog,*), 'qflx_lat_aqu(c)', qflx_lat_aqu(1), qflx_lat_aqu(2), qflx_lat_aqu(3)
-                write(iulog,*), 'h2osfc(c)', h2osfc(1), h2osfc(2), h2osfc(3)
                 ! If flooded water surface of one column is higher than the other, add faster flow since aquifer transfer (ka parameters) is slow
                
                   ! japg [06-10-2025]: Flow interaction between columns ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
@@ -1541,13 +1539,13 @@ contains
 
                  ! japg [06-10-2025]: Flow interaction between columns ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
-                write(iulog,*), 'qflx_lat_aqu(1) after', qflx_lat_aqu(1), qflx_lat_aqu(2), qflx_lat_aqu(3), qflx_lat_aqu(4)
-               ! japg [11-18-2025]: Turn off lateral flow for testing ++++++++++++++++++++++++++++++++++++++++++++++++
+                
+               ! japg [11-18-2025]: Turn off lateral flow for testing &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& ++++++++++++++++++++++++++++++++++++++++++++++++
                ! qflx_lat_aqu(1) = 0.0_r8
                ! qflx_lat_aqu(2) = 0.0_r8
                ! qflx_lat_aqu(3) = 0.0_r8
                ! qflx_lat_aqu(4) = 0.0_r8
-               ! japg [11-18-2025]: Turn off lateral flow for testing +++++++++++++++++++++++++++++++++++++++++++++++++
+               ! japg [11-18-2025]: Turn off lateral flow for testing &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& +++++++++++++++++++++++++++++++++++++++++++++++++
 
 #endif
              endif
@@ -1720,7 +1718,7 @@ contains
 
 
        ! Convert layer thicknesses from m to mm
-       write(japglog,*) 'WaterTable'  
+       
        
 
 
@@ -2198,7 +2196,7 @@ contains
 
 
        ! Convert layer thicknesses from m to mm
-         write(japglog,*) 'Drainage' 
+         
         do fc = 1, num_hydrologyc
           c = filter_hydrologyc(fc)
           nlevbed = nlev2bed(c)
@@ -2906,7 +2904,7 @@ contains
           )
 
        ! Convert layer thicknesses from m to mm
-         write(japglog,*) 'DrainageVSFM'
+         
        do j = 1,nlevgrnd
           do fc = 1, num_hydrologyc
              c = filter_hydrologyc(fc)
@@ -3243,7 +3241,7 @@ contains
           )
 
        ! map CLM to VIC
-          write(japglog,*) 'ELMVICMap'
+          
        do fc = 1, numf
           c = filter(fc)
           do i = 1, nlayer

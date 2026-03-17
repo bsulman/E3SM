@@ -496,6 +496,8 @@ module ColumnDataType
     real(r8), pointer :: qflx_lat_aqu_layer   (:,:) => null() ! Lateral flux between hummock/hollow by layer (mm H2O/s)
     real(r8), pointer :: qflx_surf_input      (:)   => null() ! Runoff input from Hummock (mm H2O/s)
     real(r8), pointer :: qflx_tide            (:)   => null() ! tidal flux between consecutive timesteps TAO
+    real(r8), pointer :: tidal_channel        (:)   => null() ! japg [1-5-2026] tidal_channel
+
 
     real(r8), pointer :: mflx_infl_1d         (:)   => null() ! infiltration source in top soil control volume (kg H2O /s)
     real(r8), pointer :: mflx_dew_1d          (:)   => null() ! liquid+snow dew source in top soil control volume (kg H2O /s)
@@ -5465,8 +5467,9 @@ contains
     allocate(this%qflx_irr_demand        (begc:endc))             ; this%qflx_irr_demand      (:)   = nan
     allocate(this%qflx_lat_aqu           (begc:endc))             ; this%qflx_lat_aqu         (:)   = 0._r8
     allocate(this%seg_qflx_lat_aqu       (begc:endc-1))           ; this%seg_qflx_lat_aqu     (:)   = 0._r8  ! japg [11-19-2025] segment lateral aquifer flow 
+    allocate(this%tidal_channel          (begc:endc-1))           ; this%tidal_channel        (:)   = 0._r8  ! japg [01-05-2026] tidal_channel  
     allocate(this%qflx_lat_aqu_layer     (begc:endc,1:nlevgrnd))  ; this%qflx_lat_aqu_layer   (:,:) = 0._r8
-    allocate(this%qflx_surf_input        (begc:endc))             ; this%qflx_surf_input         (:)   = nan   
+    allocate(this%qflx_surf_input        (begc:endc))             ; this%qflx_surf_input      (:)   = nan   
     allocate(this%qflx_tide              (begc:endc))             ; this%qflx_tide            (:)   = nan !TAO
 
     !VSFM variables
@@ -5530,9 +5533,14 @@ contains
          avgflag='A', long_name='Segment lateral flow between columns', &
          ptr_col=this%seg_qflx_lat_aqu, c2l_scale_type='urbanf')
 
+    this%tidal_channel(begc:endc-1) = spval
+    call hist_addfld1d (fname='TIDAL_CHANNEL',  units='mm', &
+         avgflag='A', long_name='Surface Water input', &
+         ptr_col=this%tidal_channel, c2l_scale_type='urbanf')
+
     this%qflx_surf_input(begc:endc-1) = spval
     call hist_addfld1d (fname='QFLX_SURF_INPUT',  units='mm/s', &
-         avgflag='A', long_name='Segment lateral flow between columns', &
+         avgflag='A', long_name='Runoff input from Hummock (mm H2O/s)', &
          ptr_col=this%qflx_surf_input, c2l_scale_type='urbanf')
 
    ! japg [11-20-2025] ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑

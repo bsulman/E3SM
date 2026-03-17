@@ -82,6 +82,7 @@ module elm_varctl
   !
   integer, public :: iulog = 6        ! "stdout" log file unit number, default is 6
   integer, public :: japglog = 7       ! "stderr" log file unit number, default is 7
+  integer, public :: japgprint = 8       ! "stderr" log file unit number, default is 7
 
   !----------------------------------------------------------
   ! Output NetCDF files
