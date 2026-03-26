@@ -323,6 +323,7 @@ module pftvarcon
   real(r8)              :: humhol_ht
   real(r8)              :: hum_frac
   real(r8)              :: humhol_dist
+  real(r8)              :: bd_adj               !adjustment for bulk_density (used to change porosity in SoilStateType.F90 TAO 9/25/205)
 ! Tidal cycle controls
   integer               :: num_tide_comps      ! Number of tidal cycle components
   real(r8)              :: tide_baseline            ! Base tide level (mean of cycle) (mm)
@@ -1093,6 +1094,8 @@ contains
     if ( .not. readv) humhol_dist = 1.0_r8
     call ncd_io('hum_frac', hum_frac, 'read', ncid, readvar=readv, posNOTonfile=.true.)
     if ( .not. readv) hum_frac = 0.5_r8
+    call ncd_io('bd_adj', bd_adj, 'read', ncid, readvar=readv, posNOTonfile=.true.)
+    if ( .not. readv) bd_adj = 1.0_r8
     call ncd_io('qflx_h2osfc_surfrate', qflx_h2osfc_surfrate, 'read', ncid, readvar=readv, posNOTonfile=.true.)
     if ( .not. readv) qflx_h2osfc_surfrate = 1.0e-7_r8
 

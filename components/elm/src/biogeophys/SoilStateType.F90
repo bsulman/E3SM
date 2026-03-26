@@ -26,6 +26,7 @@ module SoilStateType
   use ColumnType      , only : col_pp                
   use VegetationType  , only : veg_pp      
   use topounit_varcon , only : max_topounits
+  use pftvarcon       , only : bd_adj
   use GridcellType    , only : grc_pp   
   !
   implicit none
@@ -45,6 +46,7 @@ module SoilStateType
      real(r8), pointer :: cellclay_col         (:,:) ! clay value for gridcell containing column (1:nlevsoi)
      real(r8), pointer :: cellgrvl_col         (:,:) ! gravel value for gridcell containing column (1:nlevsoi)
      real(r8), pointer :: bd_col               (:,:) ! col bulk density of dry soil material [kg/m^3] (CN)
+     real(r8), pointer :: bd_adj               (:,:) ! col bulk density of dry soil material [kg/m^3] (CN)
 
      ! hydraulic properties
      real(r8), pointer :: hksat_col            (:,:) ! col hydraulic conductivity at saturation (mm H2O /s)
@@ -149,7 +151,8 @@ contains
     allocate(this%cellclay_col         (begc:endc,nlevgrnd))            ; this%cellclay_col         (:,:) = spval
     allocate(this%cellgrvl_col         (begc:endc,nlevgrnd))            ; this%cellgrvl_col         (:,:) = spval
     allocate(this%bd_col               (begc:endc,nlevgrnd))            ; this%bd_col               (:,:) = spval
-
+    allocate(this%bd_adj               (begc:endc,nlevgrnd))            ; this%bd_adj               (:,:) = spval
+    
     allocate(this%hksat_col            (begc_all:endc_all,nlevgrnd))    ; this%hksat_col            (:,:) = spval
     allocate(this%hksat_min_col        (begc:endc,nlevgrnd))            ; this%hksat_min_col        (:,:) = spval
     allocate(this%hk_l_col             (begc:endc,nlevgrnd))            ; this%hk_l_col             (:,:) = spval
@@ -324,7 +327,7 @@ contains
     ! Initialize module surface albedos to reasonable values
     !
     ! !USES:
-    use pftvarcon           , only : noveg, roota_par, rootb_par
+    use pftvarcon           , only : noveg, roota_par, rootb_par, bd_adj
     use fileutils           , only : getfil
     use organicFileMod      , only : organicrd
     use SharedParamsMod   , only : ParamsShareInst
@@ -660,14 +663,16 @@ contains
                    clay = clay3d(g,ti,1)
                    sand = sand3d(g,ti,1)
                    gravel = grvl3d(g,ti,1)
-                   om_frac = organic3d(g,ti,1)/organic_max 
+                   !om_frac = organic3d(g,ti,1)/(organic_max * bd_adj) !TAO
+                   om_frac = organic3d(g,ti,1)/(organic_max)
                 else if (lev <= min(nlevbed,nlevsoi)) then
                    do j = 1,nlevsoifl-1
                       if (zisoi(lev) >= zisoifl(j) .AND. zisoi(lev) < zisoifl(j+1)) then
                          clay = clay3d(g,ti,j+1)
                          sand = sand3d(g,ti,j+1)
                          gravel = grvl3d(g,ti,j+1)
-                         om_frac = organic3d(g,ti,j+1)/organic_max    
+                         !om_frac = organic3d(g,ti,j+1)/(organic_max * bd_adj) !TAO
+                         om_frac = organic3d(g,ti,j+1)/(organic_max)   
                       endif
                    end do
                 else
@@ -681,7 +686,8 @@ contains
                    clay = clay3d(g,ti,lev)
                    sand = sand3d(g,ti,lev)
                    gravel = grvl3d(g,ti,lev)
-                   om_frac = (organic3d(g,ti,lev)/organic_max)**2._r8
+                   !om_frac = (organic3d(g,ti,lev)/(organic_max * bd_adj))**2._r8 !TAO
+                   om_frac = (organic3d(g,ti,lev)/(organic_max))**2._r8
                 else
                    clay = clay3d(g,ti,nlevsoi)
                    sand = sand3d(g,ti,nlevsoi)

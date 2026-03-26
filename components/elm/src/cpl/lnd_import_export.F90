@@ -1118,7 +1118,7 @@ contains
           call ncd_io(ncid=ncid_pio,varname='tide_height',data=atm2lnd_vars%tide_height,flag='read',readvar=readvar)
           if(.not. readvar) call endrun('Error reading tide_height variable')
           call ncd_io(ncid=ncid_pio,varname='tide_nitrate',data=atm2lnd_vars%tide_nitrate,flag='read',readvar=readvar)
-          if(.not. readvar) call endrun('Error reading tide_nitrate variable')
+          !if(.not. readvar) call endrun('Error reading tide_nitrate variable')
           call ncd_io(ncid=ncid_pio,varname='tide_salinity',data=atm2lnd_vars%tide_salinity,flag='read',readvar=readvar)
           if(.not. readvar) call endrun('Error reading tide_salinity variable')
 

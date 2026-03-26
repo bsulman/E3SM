@@ -5634,19 +5634,19 @@ contains
     this%qflx_lat_aqu(begc:endc) = 0.0_r8
     call hist_addfld1d (fname='QFLX_LAT_AQU',  units='mm/s',  &
          avgflag='A', long_name='Lateral flow between hummock and hollow', &
-         ptr_col=this%qflx_lat_aqu, c2l_scale_type='urbanf')
+         ptr_col=this%qflx_lat_aqu, c2l_scale_type='urbanf', default='active')
 
    !SLL added 7/27/21
     this%qflx_lat_aqu_layer(begc:endc, :) = spval
     call hist_addfld2d (fname='QFLX_LAT_AQU_LAYER',  units='mm/s', type2d='levgrnd', &
          avgflag='A', long_name='Lateral flow between hummock and hollow by layer', &
-         ptr_col=this%qflx_lat_aqu_layer)
+         ptr_col=this%qflx_lat_aqu_layer, default='active')
 
    !SLL added 4/15/21
    this%qflx_tide(begc:endc) = 0.0_r8
     call hist_addfld1d (fname='QFLX_TIDE',  units='mm H2O/s',  &
          avgflag='A', long_name='Tidal flux between marsh columns', &
-         ptr_col=this%qflx_tide)
+         ptr_col=this%qflx_tide, default='active')
 #endif 
 
 
@@ -8666,7 +8666,7 @@ contains
     this%soil_bulkdensity(begc:endc,:) = spval
     call hist_addfld_decomp (fname='soil_bulkdensity', units='kg/m3', type2d='levdcmp', &
          avgflag='A', long_name='soil_bulkdensity', &
-         ptr_col=this%soil_bulkdensity, default='inactive')
+         ptr_col=this%soil_bulkdensity, default='active')
 
     this%anaerobic_frac(begc:endc,:) = spval
     call hist_addfld_decomp (fname='anaerobic_frac', units='m3/m3', type2d='levdcmp', &

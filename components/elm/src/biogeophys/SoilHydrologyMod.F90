@@ -729,7 +729,7 @@ contains
                   h2osfc_tide(c) = (atm2lnd_vars%tide_height(g,1+mod(int((days*secspday+seconds)/3600),atm2lnd_vars%tide_forcing_len)))*1000 !convert m to mm
                   col_ws%salinity(c) = atm2lnd_vars%tide_salinity(g,1+mod(int((days*secspday+seconds)/3600),atm2lnd_vars%tide_forcing_len))
                   salinity(c) = col_ws%salinity(c)
-                  col_ws%nitrate_tide(c) = atm2lnd_vars%tide_nitrate(g,1+mod(int((days*secspday+seconds)/3600),atm2lnd_vars%tide_forcing_len))
+                  !col_ws%nitrate_tide(c) = atm2lnd_vars%tide_nitrate(g,1+mod(int((days*secspday+seconds)/3600),atm2lnd_vars%tide_forcing_len))
                   ! write(iulog,*) h2osfc_tide
                   ! write(iulog,*),'grid cell',g,'column',c,'tide_height',h2osfc_tide(c),'salinity',col_ws%salinity(c)
 #endif
