@@ -394,8 +394,8 @@ contains
 #endif
 
 #if (defined COL4TH)
-            if (c .eq. 1) fsat(c) = 1.0 * exp(-3.0_r8/humhol_ht*humhol_ht_frac*(zwt(c)))   !at 30cm, hummock saturated at 5%
-            if (c .eq. 2) fsat(c) = 1.0 * exp(-3.0_r8/humhol_ht*humhol_ht_2frac*(zwt(c)))  ! ==========> japg [06-04-2025]
+            if (c .eq. 1) fsat(c) = 1.0 * exp(-3.0_r8/(humhol_ht*humhol_ht_frac)*(zwt(c)))   !at 30cm, hummock saturated at 5%
+            if (c .eq. 2) fsat(c) = 1.0 * exp(-3.0_r8/(humhol_ht*humhol_ht_2frac)*(zwt(c)))  ! ==========> japg [06-04-2025]
             if (c .eq. 3) fsat(c) = 1.0 * exp(-3.0_r8/(humhol_ht)*(zwt(c)))
             if (c .eq. 4) fsat(c) = min(1.0 * exp(-3.0_r8/(humhol_ht)*(zwt(c)-h2osfc(c)/1000.+humhol_ht)), 1._r8) !TAO 0.3 t 0.1, 0.15 to 0.35
 #endif
@@ -420,8 +420,8 @@ contains
 #endif
 
 #if (defined COL4TH)
-            if (c .eq. 1) fsat(c) = 1.0 * exp(-3.0_r8/humhol_ht*humhol_ht_frac*(zwt(c)))     !at 30cm, hummock saturated at 5%
-            if (c .eq. 2) fsat(c) = 1.0 * exp(-3.0_r8/humhol_ht*humhol_ht_2frac*(zwt(c)))    ! ==========> japg [06-04-2025]
+            if (c .eq. 1) fsat(c) = 1.0 * exp(-3.0_r8/(humhol_ht*humhol_ht_frac)*(zwt(c)))     !at 30cm, hummock saturated at 5%
+            if (c .eq. 2) fsat(c) = 1.0 * exp(-3.0_r8/(humhol_ht*humhol_ht_2frac)*(zwt(c)))    ! ==========> japg [06-04-2025]
             if (c .eq. 3) fsat(c) = 1.0 * exp(-3.0_r8/(humhol_ht)*(zwt(c)))
             if (c .eq. 4) fsat(c) = min(1.0 * exp(-3.0_r8/(humhol_ht)*(zwt(c)-h2osfc(c)/1000.+humhol_ht)), 1._r8) !TAO 0.3 t 1.5, 0.15 to 0.35
 #endif
@@ -830,7 +830,8 @@ contains
                qflx_surf_input(1) = 0._r8 !hummock TAO KEEP AT ZERO!!!
                qflx_surf_input(2) = 0._r8 !hummock TAO KEEP AT ZERO!!!
                qflx_surf_input(3) = 0._r8 !hummock TAO KEEP AT ZERO!!!     ====> japg [06-10-2025]
-               qflx_surf_input(4) = qflx_surf(3)*(hum_frac/hol_frac)     ! ====> japg [06-10-2025]: it should be from qflx_surf(3) instead of qflx_surf(2) 
+               ! qflx_surf_input(4) = qflx_surf(3)*(hum_frac/hol_frac)     ! ====> japg [06-10-2025]: 
+               qflx_surf_input(4) = 0._r8
              end if
              qflx_in_soil(c) = (1._r8 - frac_h2osfc(c)) * (qflx_top_soil(c) - qflx_surf(c) + qflx_surf_input(c))
              qflx_in_h2osfc(c) = frac_h2osfc(c) * (qflx_top_soil(c) - qflx_surf(c) + qflx_surf_input(c))
@@ -1311,7 +1312,8 @@ contains
                   
                   ! 1. Compute hydraulic head difference between columns 
                   
-                  humhol_elevs = [humhol_ht*humhol_ht_2frac, humhol_ht*humhol_ht_frac, humhol_ht] ! japg [07-23-2025] vector of humhol heights (elevations)
+                  ! humhol_elevs = [humhol_ht*humhol_ht_2frac, humhol_ht*humhol_ht_frac, humhol_ht] ! japg [07-23-2025] vector of humhol heights (elevations)
+                  humhol_elevs = [humhol_ht*humhol_ht_frac, humhol_ht*humhol_ht_2frac, humhol_ht] ! japg [07-23-2025] vector of humhol heights (elevations)
                   
                  !write(japglog,*) 'zwt = ', zwt
                  !write(japglog,*) 'h2osfc = ', h2osfc
@@ -1338,8 +1340,8 @@ contains
                   ! column_dist = [52.42, 92.23, 50.0]  ! japg [01-07-2026] &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& ============================================> Distance For Sensitivity
 
                   do ic = 1, num_hydrologyc-1                     
-                        seg_qflx_lat_aqu(ic) = -((hyka(ic)+hyka(ic+1))/2) * (hydhead_diff(ic) / column_dist(ic)) 
-                        ! seg_qflx_lat_aqu(ic) =  0   ! &&&&&&&&&&&&&&&&&&&&&& ===============================> Turn off segmenta lateral flows
+                        ! seg_qflx_lat_aqu(ic) = -((hyka(ic)+hyka(ic+1))/2) * (hydhead_diff(ic) / column_dist(ic)) 
+                        seg_qflx_lat_aqu(ic) =  0   ! &&&&&&&&&&&&&&&&&&&&&& ===============================> Turn off segmenta lateral flows
                   end do
 
                   ! 3. Compute net flow at each column
@@ -1448,9 +1450,12 @@ contains
                ! japg [3-4-2026]------------------------------------------------------------------
 
                ! Constant salinity forcing (for testing)
+                     
+                     col_ws%salinity(c) = 12  !&&&&&&&&&&&&&&& 
                      ! col_ws%salinity(c) = sum(atm2lnd_vars%tide_salinity)/atm2lnd_vars%tide_forcing_len  !&&&&&&&&&&&&&&& 
-                     ! salinity(1:3) = col_ws%salinity(c) ! &&&&&&&&&&&&&&&&&&
-                     ! write(japglog,*), 'japg salinity:', salinity(1)  ! &&&&&&&&&&&&&&&&&&
+
+                     salinity(1:3) = col_ws%salinity(c) ! &&&&&&&&&&&&&&&&&&
+                     write(japglog,*), 'japg salinity:', salinity(1)  ! &&&&&&&&&&&&&&&&&&
 
                ! japg [3-4-2026]------------------------------------------------------------------
 
