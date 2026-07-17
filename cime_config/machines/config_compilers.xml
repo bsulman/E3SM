@@ -1010,6 +1010,64 @@ flags should be captured within MPAS CMake files.
   <SUPPORTS_CXX>TRUE</SUPPORTS_CXX>
 </compiler>
 
+<compiler MACH="omearata" COMPILER="gnu">
+  <CFLAGS>
+    <append compile_threaded="TRUE"> -fopenmp </append>
+  </CFLAGS>
+  <CMAKE_OPTS>
+    <append COMP_NAME="cism"> -D CISM_GNU=ON </append>
+  </CMAKE_OPTS>
+  <CPPDEFS>
+    <append> -DFORTRANUNDERSCORE -DNO_R16</append>
+    <!-- <append COMP_NAME="clm"> -DCLM_PFLOTRAN </append>
+         <append COMP_NAME="clm"> -DCOLUMN_MODE </append> -->
+  </CPPDEFS>
+  <CXX_LINKER>FORTRAN</CXX_LINKER>
+  <FC_AUTO_R8>
+    <base> -fdefault-real-8 </base>
+  </FC_AUTO_R8>
+  <FFLAGS>
+    <!-- -ffree-line-length-none and -ffixed-line-length-none need to be in FFLAGS rather than in FIXEDFLAGS/FREEFLAGS
+                                 so that these are passed to cmake builds (cmake builds don't use FIXEDFLAGS and FREEFLAGS). -->
+    <base> -O -fconvert=big-endian -ffree-line-length-none -ffixed-line-length-none -fno-range-check</base>
+    <append compile_threaded="TRUE"> -fopenmp </append>
+    <append DEBUG="TRUE"> -g -Wall </append>
+    <append> -I$(NETCDF_PATH)/include -I$(HDF5_PATH)/include </append>
+    <!-- <append MODEL="clm"> -I/lustre/or-hydra/cades-ccsi/$USER/models/pflotran-interface/src/clm-pflotran</append> -->
+  </FFLAGS>
+  <FIXEDFLAGS>
+    <base>  -ffixed-form </base>
+  </FIXEDFLAGS>
+  <FREEFLAGS>
+    <base> -ffree-form </base>
+  </FREEFLAGS>
+  <PATH>/software/baseline/nsp/spack-envs/core-25.05/opt/gcc-8.5.0.core/perl-5.40.0-pwv5237oq3rfrgdyou22rp4sf3dywvuz/bin:$ENV{PATH}<PATH>
+  <HDF5_PATH>${OLCF_HDF5_ROOT}</HDF5_PATH>
+  <NETCDF_C_PATH>${OLCF_NETCDF_C_ROOT}</NETCDF_C_PATH>
+  <PNETCDF_PATH>${OLCF_PARALLEL_NETCDF_ROOT}</PNETCDF_PATH>
+  <NETCDF_FORTRAN_PATH>${OLCF_NETCDF_FORTRAN_ROOT}</NETCDF_FORTRAN_PATH>
+  <BLASLAPACK_LIBDIR>${BLASLAPACK_LIBDIR}/lib</BLASLAPACK_LIBDIR>
+  <PETSC_PATH>/projects/hpcl-cli185/proj-shared/ccsi-apps/petsc-3.x-noopt</PETSC_PATH> <!-- this is needed for cmake list of CLM_USE_PETSC, and cannot be passing from machine configuration (weired) -->
+  <PFLOTRAN_PATH>/projects/hpcl-cli185/proj-shared/ccsi-apps/alquimia-pflotran/v2021/pflotran<PFLOTRAN_PATH>
+  <!--<ALQUIMIA_PATH></ALQUIMIA_PATH> -->
+  <LDFLAGS>
+    <append compile_threaded="TRUE"> -fopenmp </append>
+    <append MODEL="driver"> -L$NETCDF_PATH/lib -Wl,-rpath=$NETCDF_PATH/lib -lnetcdff -lnetcdf </append>
+    <!-- <append MODEL="driver"> -L$ENV{CLM_PFLOTRAN_SOURCE_DIR} -lpflotran $ENV{PETSC_LIB} </append> -->
+    <append MODEL="driver"> -L$(HDF5_PATH)/lib -Wl,-rpath=$(HDF5_PATH)/lib -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5 </append>
+  </LDFLAGS>
+  <SLIBS>
+    <append> -L$NETCDF_PATH/lib -Wl,-rpath=$NETCDF_PATH/lib -lnetcdff -lnetcdf </append>
+  </SLIBS>
+  <MPICC>mpicc</MPICC>
+  <MPICXX>mpic++</MPICXX>
+  <MPIFC>mpif90</MPIFC>
+  <SCC>gcc</SCC>
+  <SCXX>g++</SCXX>
+  <SFC>gfortran</SFC>
+  <SUPPORTS_CXX>TRUE</SUPPORTS_CXX>
+</compiler>
+
 <compiler MACH="cascade" COMPILER="intel">
   <CONFIG_ARGS>
     <base> --enable-filesystem-hints=lustre</base>

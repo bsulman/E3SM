@@ -3585,24 +3585,26 @@
     <EXEROOT>/home/$USER/models/ACME/run/$CASE/bld</EXEROOT>
   </machine>
 
-  <machine MACH="cades">
-    <DESC>OR-CONDO, CADES-CCSI, os is Linux, 16 pesx2HThreads/nodes, batch system is Slurm</DESC>
-    <NODENAME_REGEX>or-condo</NODENAME_REGEX>
+ <machine MACH="pathfinder">
+    <DESC>ornl-ITSD, Pathfinder, os is Linux, Dell 7615  each with 84 cores and 754gb ram, batch system is slurm</DESC>
+    <NODENAME_REGEX>pfc*</NODENAME_REGEX>
     <OS>LINUX</OS>
     <COMPILERS>gnu</COMPILERS>
     <MPILIBS>openmpi,mpi-serial</MPILIBS>
-    <CIME_OUTPUT_ROOT>/lustre/or-scratch/cades-ccsi/scratch/$USER</CIME_OUTPUT_ROOT>
-    <DIN_LOC_ROOT>/lustre/or-scratch/cades-ccsi/proj-shared/project_acme/e3sm_inputdata</DIN_LOC_ROOT>
-    <DIN_LOC_ROOT_CLMFORC>/lustre/or-scratch/cades-ccsi/proj-shared/project_acme/e3sm_inputdata/atm/datm7</DIN_LOC_ROOT_CLMFORC>
-    <DOUT_S_ROOT>$CIME_OUTPUT_ROOT/archive/$CASE</DOUT_S_ROOT>
-    <BASELINE_ROOT>/lustre/or-scratch/cades-ccsi/proj-shared/project_acme/baselines/$COMPILER</BASELINE_ROOT>
-    <CCSM_CPRNC>/lustre/or-scratch/cades-ccsi/proj-shared/tools/cprnc</CCSM_CPRNC>
-    <GMAKE_J>4</GMAKE_J>
+    <CIME_OUTPUT_ROOT>/scratch/hpcl-cli185/$USER/cime_output_dirs</CIME_OUTPUT_ROOT>
+    <DIN_LOC_ROOT>/projects/hpcl-cli185/world-shared/e3sm/inputdata</DIN_LOC_ROOT>
+    <DIN_LOC_ROOT_CLMFORC>/projects/hpcl-cli185/world-shared/e3sm/inputdata/atm/datm7</DIN_LOC_ROOT_CLMFORC>
+    <DOUT_S_ROOT>/projects/hpcl-cli185/users/$USER/archive/e3sm/$CASE</DOUT_S_ROOT>
+    <BASELINE_ROOT>/projects/hpcl-cli185/world-shared/e3sm/baselines/$COMPILER-$MPILIB</BASELINE_ROOT>
+    <CCSM_CPRNC>/projects/hpcl-cli185/world-shared/e3sm/tools/cprnc/bin/cprnc</CCSM_CPRNC>
+    <!--<GMAKE>gmake</GMAKE> -->
+    <GMAKE_J>32</GMAKE_J>
     <TESTS>e3sm_developer</TESTS>
+    <NTEST_PARALLEL_JOBS>32</NTEST_PARALLEL_JOBS>
     <BATCH_SYSTEM>slurm</BATCH_SYSTEM>
     <SUPPORTED_BY>yuanf -at- ornl.gov</SUPPORTED_BY>
-    <MAX_TASKS_PER_NODE>32</MAX_TASKS_PER_NODE>
-    <MAX_MPITASKS_PER_NODE>32</MAX_MPITASKS_PER_NODE>
+    <MAX_TASKS_PER_NODE>84</MAX_TASKS_PER_NODE>
+    <MAX_MPITASKS_PER_NODE>84</MAX_MPITASKS_PER_NODE>
     <PROJECT_REQUIRED>FALSE</PROJECT_REQUIRED>
     <mpirun mpilib="openmpi" compiler="gnu">
       <executable>srun</executable>
@@ -3610,60 +3612,68 @@
         <arg name="num_tasks"> -n {{ total_tasks }}</arg>
       </arguments>
     </mpirun>
-    <!-- mpirun mpilib="mpi-serial">
+    <mpirun mpilib="mpi-serial">
       <executable> </executable>
-    </mpirun -->
+    </mpirun>
+
     <module_system type="module" allow_error="true">
-      <init_path lang="sh">/sw/cades-open/lmod/8.7.55/init/sh</init_path>
-      <init_path lang="csh">/sw/cades-open/lmod/8.7.55/init/csh</init_path>
-      <init_path lang="perl">/sw/cades-open/lmod/8.7.55/init/perl</init_path>
-      <init_path lang="python">/sw/cades-open/lmod/8.7.55/init/env_modules_python.py</init_path>
-      <cmd_path lang="sh"></cmd_path>
-      <cmd_path lang="csh"></cmd_path>
-      <cmd_path lang="perl"></cmd_path>
-      <cmd_path lang="python">/sw/cades-open/lmod/8.7.55/libexec/lmod python</cmd_path>
+      <init_path lang="sh">/software/baseline/nsp/lmod/8.7.37/init/sh</init_path>
+      <init_path lang="csh">/software/baseline/nsp/lmod/8.7.37/init/csh</init_path>
+      <init_path lang="python">/software/baseline/nsp/lmod/8.7.37/init/env_modules_python.py</init_path>
+      <init_path lang="perl">/software/baseline/nsp/lmod/8.7.37/init/perl</init_path>
+      <cmd_path lang="perl">module</cmd_path>
+      <cmd_path lang="python">/software/baseline/nsp/lmod/8.7.37/libexec/lmod python</cmd_path>
+      <cmd_path lang="sh">module</cmd_path>
+      <cmd_path lang="csh">module</cmd_path>
       <modules>
         <command name="purge"/>
+        <command name="load">miniforge3/24.11.3-0</command>
       </modules>
-      <!-- modules compiler="gnu" mpilib="mpi-serial">
-        <command name="load">gcc/12.2.0</command>
-        <command name="load">python/3.10.14</command>
-        <command name="load">cmake/3.24.4</command>
-        <command name="load">openblas/0.3.26</command>
-        <command name="load">hdf5/1.14.3</command>
-      </modules -->
-      <modules compiler="gnu" mpilib="openmpi">
+      
+    <modules compiler="gnu" mpilib="openmpi">
+      <command name="load">DefApps</command>
+      <command name="load">cmake/3.30.5</command>
+      <command name="load">gcc/12.4.0</command>
+      <command name="load">openmpi/5.0.5</command>
+      <command name="load">openblas/0.3.28</command>
+      <command name="load">hdf5/1.14.5-mpi</command>
+      <command name="load">netcdf-c/4.9.2-mpi-h5f</command>
+      <command name="load">netcdf-cxx/4.2-mpi</command>
+      <command name="load">netcdf-fortran/4.6.1-mpi-h5f</command>
+      <command name="load">parallel-netcdf/1.12.3-mpi</command>
+    </modules>
+
+      <modules compiler="gnu" mpilib="mpi-serial">
         <command name="load">DefApps</command>
-        <command name="load">openblas/0.3.26</command>
-        <command name="load">wget/1.21.3</command>
-        <command name="load">cmake/3.24.4</command>
-        <command name="load">python/3.10.14</command>
-        <command name="load">hdf5/1.14.3-mpi</command>
-        <command name="load">netcdf-c/4.9.2-mpi-h5f</command>
-        <command name="load">netcdf-fortran/4.6.1-mpi-h5f</command>
-        <command name="load">parallel-netcdf/1.12.3-mpi</command>
+        <command name="load">gcc/12.4.0</command>
+        <command name="unload">openmpi</command>
+        <command name="load">netlib-lapack/3.11.0</command>
       </modules>
+
     </module_system>
+
     <RUNDIR>$CIME_OUTPUT_ROOT/$CASE/run</RUNDIR>
     <EXEROOT>$CIME_OUTPUT_ROOT/$CASE/bld</EXEROOT>
     <environment_variables compiler="gnu" mpilib="openmpi">
-      <env name="HDF5_PATH">$ENV{OLCF_HDF5_ROOT}</env>
-      <env name="NETCDF_PATH">$ENV{OLCF_NETCDF_C_ROOT}</env>
+      <env name="PETSC_PATH">/projects/hpcl-cli185/proj-shared/ccsi-apps/petsc-3.x-noopt/</env>
+      <!--  perl5 lib</env> -->
+      <!--  env name="PATH">/home/f9y/perl5/bin:$ENV{PATH}/</env> -->
+      <env name="PATH">/software/baseline/nsp/spack-envs/core-25.05/opt/gcc-8.5.0.core/perl-5.40.0-pwv5237oq3rfrgdyou22rp4sf3dywvuz/bin:$ENV{PATH}</env>
+      <env name="PERL5LIB">/projects/hpcl-cli185/users/zdr/perl/pathfinder/local/lib/perl5:/projects/hpcl-cli185/users/zdr/perl/pathfinder/local/lib/perl5/x86_64-linux-thread-multi</env>
+      
+      <!--  either of the following approaches is working very well
+      <env name="HDF5_ROOT">$SHELL{dirname $(dirname $(which h5dump))}</env>
+      <env name="NETCDF_C_PATH">$SHELL{dirname $(dirname $(which nc-config))}</env>
+      <env name="NETCDF_FORTRAN_PATH">$SHELL{dirname $(dirname $(which nf-config))}</env>
+      <env name="PNETCDF_PATH">$SHELL{dirname $(dirname $(which pnetcdf_version))}</env>
+      -->
+      <env name="HDF5_ROOT">$ENV{OLCF_HDF5_ROOT}</env>
       <env name="NETCDF_C_PATH">$ENV{OLCF_NETCDF_C_ROOT}</env>
       <env name="NETCDF_FORTRAN_PATH">$ENV{OLCF_NETCDF_FORTRAN_ROOT}</env>
       <env name="PNETCDF_PATH">$ENV{OLCF_PARALLEL_NETCDF_ROOT}</env>
-      <env name="BLASLAPACK_LIBDIR">$ENV{OLCF_OPENBLAS_ROOT}/lib</env>
-      <env name="PERL5LIB">/home/f9y/perl5/lib/perl5</env>
-      <env name="PETSC_PATH">/nfs/data/ccsi/proj-shared/E3SM/tools/petsc-x/release-3.20</env>
+      <env name="BLASLAPACK_LIBDIR">$ENV{BLASLAPACK_LIBDIR}</env>
     </environment_variables>
-    <!-- environment_variables compiler="gnu" mpilib="mpi-serial">
-      <env name="HDF5_PATH"></env>
-      <env name="NETCDF_PATH"></env>
-      <env name="NETCDF_C_PATH"></env>
-      <env name="NETCDF_FORTRAN_PATH"></env>
-      <env name="BLASLAPACK_LIBDIR">$ENV{OLCF_OPENBLAS_ROOT}/lib</env>
-      <env name="PERL5LIB">/home/f9y/perl5/lib/perl5</env>
-    </environment_variables -->
+
   </machine>
 
   <machine MACH="cades-baseline">

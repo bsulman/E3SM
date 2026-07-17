@@ -18,7 +18,8 @@ module SoilHydrologyMod
   use ColumnType        , only : col_pp
   use ColumnDataType    , only : col_es, col_ws, col_wf
   use VegetationType    , only : veg_pp
-  use VegetationDataType, only : veg_wf
+  use VegetationDataType, only : veg_wf, veg_cf
+  use CanopyStateType   , only : canopystate_type
   use abortutils      , only : endrun
 
   !
@@ -39,7 +40,7 @@ contains
 
   !-----------------------------------------------------------------------
   subroutine SurfaceRunoff (bounds, num_hydrologyc, filter_hydrologyc, &
-       num_urbanc, filter_urbanc, soilhydrology_vars, soilstate_vars, dtime)
+       num_urbanc, filter_urbanc, soilhydrology_vars, soilstate_vars, canopystate_vars, dtime)
     !
     ! !DESCRIPTION:
     ! Calculate surface runoff
@@ -64,6 +65,7 @@ contains
     integer                  , intent(in)    :: num_urbanc           ! number of column urban points in column filter
     integer                  , intent(in)    :: filter_urbanc(:)     ! column filter for urban points
     type(soilhydrology_type) , intent(inout) :: soilhydrology_vars
+    type(canopystate_type)   , intent(in)    :: canopystate_vars
     type(soilstate_type)     , intent(in)    :: soilstate_vars
     real(r8), intent(in)  :: dtime
     !
@@ -95,7 +97,6 @@ contains
          wtfact           =>    soilstate_vars%wtfact_col           , & ! Input:  [real(r8) (:)   ]  maximum saturated fraction for a gridcell
          hksat            =>    soilstate_vars%hksat_col            , & ! Input:  [real(r8) (:,:) ]  hydraulic conductivity at saturation (mm H2O /s)
          bsw              =>    soilstate_vars%bsw_col              , & ! Input:  [real(r8) (:,:) ]  Clapp and Hornberger "b"
-
          ! ht_above_stream  =>    soilhydrology_vars%ht_above_stream      , & ! Input: [real(r8) (:)] Height of soil column relative to stream (m). Used for tides
 
          h2osoi_ice       =>    col_ws%h2osoi_ice      , & ! Input:  [real(r8) (:,:) ]  ice lens (kg/m2)                                
@@ -109,7 +110,9 @@ contains
          qflx_surf        =>    col_wf%qflx_surf        , & ! Output: [real(r8) (:)   ]  surface runoff (mm H2O /s)
          qflx_irrig       =>    col_wf%qflx_irrig       , & ! Input:  [real(r8) (:)   ]  irrigation flux (mm H2O /s)
          irrig_rate       =>    veg_wf%irrig_rate       , & ! Input:  [real(r8) (:)   ]  current irrigation rate (applied if !n_irrig_steps_left > 0) [mm/s]
-
+         agnpp            =>    veg_cf%agnpp            , & ! Input:  [real(r8) (:)   ]  (gC/m2/s) aboveground NPP
+         bgnpp            =>    veg_cf%bgnpp            , & ! Input:  [real(r8) (:)   ]  (gC/m2/s) belowground NPP
+         tlai             =>    canopystate_vars%tlai_patch         , & ! Input:  [real(r8) (:)   ]  one-sided leaf area index, no burying by snow
          zwt              =>    soilhydrology_vars%zwt_col          , & ! Input:  [real(r8) (:)   ]  water table depth (m)
          max_moist        =>    soilhydrology_vars%max_moist_col    , & ! Input:  [real(r8) (:,:) ]  maximum soil moisture (ice + liq, mm)
          frost_table      =>    soilhydrology_vars%frost_table_col  , & ! Input:  [real(r8) (:)   ]  frost table depth (m)
@@ -181,10 +184,10 @@ contains
 #endif
 
 ! Kind of a scale issue here since we're explicitly simulating surface runoff further down for marsh columns. Maybe fsat should be zero?
-! #if (defined MARSH)
-         ! fsat(c) = 1.0 * exp(-3.0_r8/ht_above_stream(c)*(zwt(c)))   !at 30cm, hummock saturated at 5% changed to 0.1 TAO
-!          if (c .eq. 2) fsat(c) = min(1.0 * exp(-3.0_r8/humhol_ht*(zwt(c)-h2osfc(c)/1000.+humhol_ht)), 1._r8) !TAO 0.3 t0 0.1, 0.15 to 0.35 !bsulman: what does 0.15 represent?
-! #endif
+#if (defined MARSH)
+          fsat(c) = 1.0 * exp(-3.0_r8/humhol_ht*(zwt(c)))   
+          if (c .eq. 2) fsat(c) = min(1.0 * exp(-3.0_r8/humhol_ht*(zwt(c)-h2osfc(c)/1000.+humhol_ht)), 1._r8)
+#endif
          ! use perched water table to determine fsat (if present)
          if ( frost_table(c) > zwt(c)) then
             if (use_vichydro) then
@@ -196,10 +199,10 @@ contains
             fsat(c) = 1.0_r8 * exp(-3.0_r8/humhol_ht*(zwt(c)))   !at 30cm, hummock saturated at 5%
 #endif
 
-! #if (defined MARSH)
-            ! fsat(c) = 1.0 * exp(-3.0_r8/ht_above_stream(c)*(zwt(c)))   !at 30cm, hummock saturated at 5%
-!             if (c .eq. 2) fsat(c) = min(1.0 * exp(-3.0_r8/humhol_ht*(zwt(c)-h2osfc(c)/1000.+humhol_ht)), 1._r8) !TAO 0.3 t 0.1, 0.15 to 0.35
-! #endif
+#if (defined MARSH)
+            ! fsat(c) = 1.0 * exp(-3.0_r8/humhol_ht*(zwt(c)))   !at 30cm, hummock saturated at 5%
+             if (c .eq. 2) fsat(c) = min(1.0 * exp(-3.0_r8/humhol_ht*(zwt(c)-h2osfc(c)/1000.+humhol_ht)), 1._r8) !TAO 0.3 t 0.1, 0.15 to 0.35
+#endif
 
          else
             if ( frost_table(c) > zwt_perched(c)) then
@@ -209,10 +212,10 @@ contains
             fsat(c) = 1.0_r8 * exp(-3.0_r8/humhol_ht*(zwt(c)))   !at 30cm, hummock saturated at 5%
 #endif   
 
-! #if (defined MARSH)
-            ! fsat(c) = 1.0 * exp(-3.0_r8/humhol_ht*(zwt(c))) !at 30cm, hummock saturated at 5%
-!             if (c .eq. 2) fsat(c) = min(1.0 * exp(-3.0_r8/humhol_ht*(zwt(c)-h2osfc(c)/1000.+humhol_ht)), 1._r8) !TAO 0.3 t 1.5, 0.15 to 0.35
-! #endif 
+#if (defined MARSH)
+             fsat(c) = 1.0 * exp(-3.0_r8/humhol_ht*(zwt(c))) !at 30cm, hummock saturated at 5%
+             if (c .eq. 2) fsat(c) = min(1.0 * exp(-3.0_r8/humhol_ht*(zwt(c)-h2osfc(c)/1000.+humhol_ht)), 1._r8) !TAO 0.3 t 1.5, 0.15 to 0.35
+#endif 
          endif
          if (origflag == 1) then
             if (use_vichydro) then
@@ -238,12 +241,12 @@ contains
            else
              qflx_surf(c) = 0._r8   !turn off surface runoff for hollow
            endif
-! #elif (defined MARSH)
-!             if (c .eq. 1) then  !XS - only compute sfc runoff from hummock, send to hollow 
-!              qflx_surf(c) = fcov(c) * qflx_top_soil(c) !TAO
-!             else
-!              qflx_surf(c) = 0._r8   !turn off surface runoff for hollow
-!             endif
+ #elif (defined MARSH)
+             if (c .eq. 1) then  !XS - only compute sfc runoff from hummock, send to hollow 
+              qflx_surf(c) = fcov(c) * qflx_top_soil(c) !TAO
+             else
+              qflx_surf(c) = 0._r8   !turn off surface runoff for hollow
+             endif
 #else
            qflx_surf(c) = fcov(c) * qflx_top_soil(c)
 #endif
@@ -739,7 +742,7 @@ contains
                   enddo
                endif
 
-                h2osfc_tide(c) = h2osfc_tide(c) + tide_baseline - ht_above_stream(c)*1000._r8
+                h2osfc_tide(c) = h2osfc_tide(c) + tide_baseline - humhol_ht *1000._r8
                 ! Limit h2osfc_tide to above bedrock level
                 h2osfc_tide(c) = max(h2osfc_tide(c),-zi(c,nlevbed-1)*1000_r8)
 
@@ -1706,7 +1709,7 @@ contains
              endif
 
 ! bsulman: Does MARSH need this deep_seep stuff?
-#if (defined HUM_HOL)
+#if (defined HUM_HOL|| defined MARSH)
           deep_seep = 0._r8 !100.0_r8 / 365._r8 / 86400._r8  !rate per second
           !changes for hummock hollow topography
           if (c .eq. 1) then !hummock

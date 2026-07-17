@@ -188,7 +188,7 @@ contains
       end if
 
       call SurfaceRunoff(bounds, num_hydrologyc, filter_hydrologyc, num_urbanc, filter_urbanc, &
-           soilhydrology_vars, soilstate_vars, dtime)
+           soilhydrology_vars, soilstate_vars, canopystate_vars, dtime)
 
       !------------------------------------------------------------------------------------
       if (use_pflotran .and. pf_hmode) then

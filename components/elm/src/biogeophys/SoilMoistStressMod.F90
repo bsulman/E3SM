@@ -407,7 +407,7 @@ contains
                      rresis(p,j) = rresis(p,j)*osm_inhib(p)
                   endif
                else
-                  if (salinity(c) .ge. sal_threshold(veg_pp%itype(p))) then
+                  if ((salinity(c) .ge. sal_threshold(veg_pp%itype(p))) .and. ((h2osoi_vol(c,j) .ge. watsat(c,j)))) then !(TAO 6/10/2026)
                      osm_inhib(p) = exp(-0.5*((salinity(c)-sal_opt(veg_pp%itype(p)))/sal_tol(veg_pp%itype(p)))**2)
                      rresis(p,j) = rresis(p,j)*osm_inhib(p)
                   endif
