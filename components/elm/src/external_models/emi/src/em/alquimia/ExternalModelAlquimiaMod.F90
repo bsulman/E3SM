@@ -1403,8 +1403,10 @@ end subroutine EMAlquimia_Coldstart
               enddo
               do j=1,nlevdecomp
                 if(tot_tidal_inflow > 0.0) then
-                  qflx_lat_aqu_l2e(c,j) = qflx_lat_aqu_l2e(c,j) + min(tot_tidal_inflow,dz(c,j)*1e3_r8*max(porosity_l2e(c,j)-(h2o_liqvol(c,j)+h2o_icevol(c,j)),0.25_r8)*dt/3600_r8)
-                  tot_tidal_inflow = tot_tidal_inflow - min(tot_tidal_inflow,dz(c,j)*1e3_r8*max(porosity_l2e(c,j)-(h2o_liqvol(c,j)+h2o_icevol(c,j)),0.25_r8)*dt/3600_r8)
+                  ! qflx_lat_aqu_l2e(c,j) = qflx_lat_aqu_l2e(c,j) + min(tot_tidal_inflow,dz(c,j)*1e3_r8*max(porosity_l2e(c,j)-(h2o_liqvol(c,j)+h2o_icevol(c,j)),0.05_r8)*dt/3600_r8)
+                  ! tot_tidal_inflow = tot_tidal_inflow - min(tot_tidal_inflow,dz(c,j)*1e3_r8*max(porosity_l2e(c,j)-(h2o_liqvol(c,j)+h2o_icevol(c,j)),0.05_r8)*dt/3600_r8)
+                  qflx_lat_aqu_l2e(c,j) = qflx_lat_aqu_l2e(c,j) + min(tot_tidal_inflow,qflx_adv_l2e(c,j)*dt)
+                  tot_tidal_inflow = tot_tidal_inflow - min(tot_tidal_inflow,qflx_adv_l2e(c,j)*dt)
                 elseif (tot_tidal_outflow > 0.0) then
                   ! I think this is double counting
                   qflx_lat_aqu_l2e(c,j) = qflx_lat_aqu_l2e(c,j) - min(tot_tidal_outflow,dz(c,j)*1e3_r8*max(porosity_l2e(c,j),0.25_r8)*dt/3600_r8)
